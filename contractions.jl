@@ -3,7 +3,7 @@ using KrylovKit
 using LinearAlgebra
 
 
-# MPS A-matrix is a 3-index tensor, A[s,i,j]
+# MPS A-matrix is a 3-index tensor, A[i,s,j]
 #    s
 #    |
 # i -A- j
@@ -22,8 +22,8 @@ using LinearAlgebra
 # [i,j] act on the virtual bonds
 
 function contract_from_left_MPS(A,E,B)
-    @tensor temp_1[:] := E[-1,1] * A[-2,1,-3] 
-    @tensor temp[:] := temp_1[1,2,-1] * conj( B[2,1,-2] ) 
+    @tensor temp_1[:] := E[-1,1] * A[1,-2,-3] 
+    @tensor temp[:] := temp_1[1,2,-1] * conj( B[1,2,-2] ) 
     return temp
 end
 
@@ -36,8 +36,8 @@ end
 ## +-    +--B-  
 
 function contract_from_left(E_L,X,W)
-    @tensor temp_1[:] := E_L[1,-3,-4]  * X[-2,1,-1] 
-    @tensor temp_2[:] := temp_1[-1, -2, -5, 1 ]* conj( X[-4, 1,-3] ) 
+    @tensor temp_1[:] := E_L[1,-3,-4]  * X[1,-2,-1] 
+    @tensor temp_2[:] := temp_1[-1, -2, -5, 1 ]* conj( X[1, -4,-3] ) 
     @tensor temp[:] := temp_2[ -1, 2, -3, 3, 1 ] * W[1,-2, 2, 3]
     return temp
 end
@@ -50,9 +50,8 @@ end
 ##   |      |  |
 ##  -+     -B--+
 function contract_from_right(E_R,Y,W)
-    @tensor temp_1[:] :=  Y[-2,-1,1]  * E_R[ 1, -3,-4]
-    @tensor temp_2[:] := temp_1[ -1, -2, -5,  1] * conj( Y[-4,-3,1] ) 
+    @tensor temp_1[:] :=  Y[-1,-2,1]  * E_R[ 1, -3,-4]
+    @tensor temp_2[:] := temp_1[ -1, -2, -5,  1] * conj( Y[-3,-4,1] ) 
     @tensor temp[:] := temp_2[ -1, 1, -3, 2, 6] * W[ -2 6 1 2 ]  
     return temp
 end
-
