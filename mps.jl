@@ -1,4 +1,9 @@
+#   Author: V. Vitale
+#   Feb 2022
+
 include("abstractTN.jl")
+
+
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
 #    s
 #    |
