@@ -18,7 +18,7 @@ data(m::AbstractTN) = m.data
 
 Base.:size(m::AbstractTN) = m.N
 
-dims(m::AbstractTN) = Dict(["site "*string(key)=>Base.size(m.data[key]) for key in keys(data(m))])
+dims(m::AbstractTN) = Dict([key=>Base.size(m.data[key]) for key in keys(data(m))])
 
 function copy(A::AbstractTN)
     N=length(A)

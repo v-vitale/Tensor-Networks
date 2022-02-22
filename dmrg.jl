@@ -1,3 +1,6 @@
+#   Author: V. Vitale
+#   Feb 2022
+
 using TensorOperations
 using KrylovKit
 using LinearAlgebra
@@ -19,33 +22,60 @@ function initial_R(W::Array)
     return R
 end
 
-function construct_R(A::MPS, W::MPO, B::MPO)
+function construct_R(A::MPS, W::MPO)
     R = Dict()
     R[A.N] = initial_R(W.data[A.N])
     for i in A.N:-1:2
-        R[i-1] = contract_from_right(R[i], A.data[i], B.data[i])
+        R[i-1] = contract_from_right(R[i], A.data[i], W.data[i])
     end
     return R
 end
 
 function construct_L(A::MPS, W::MPO)
     L = Dict()
-    L[1] = initial_L(W.data[1],N)
+    L[1] = initial_L(W.data[1])
     return L
 end
 
 
-function one_site_dmrg( C::MPS,
-                        W::MPO,
-                        sweeps::Int64)
+## tensor contraction from the right hand side
+##  -+     -A--+
+##   |      |  |
+##  -R' =  -W--R
+##   |      |  |
+##  -+     -B--+
 
-    d = size(C.data[2])[2]
-    chi= size(C.data[2])[1]
+function contract_from_right(E_R,Y,W)
+    @tensor temp_1[:] :=  Y[-1,-2,1]  * E_R[ 1, -3,-4]
+    @tensor temp_2[:] := temp_1[ -1, -2, -5,  1] * conj( Y[-3,-4,1] ) 
+    @tensor temp[:] := temp_2[ -1, 1, -3, 2, 6] * W[ -2 6 1 2 ]  
+    return temp
+end
+
+## tensor contraction from the left hand side
+## +-    +--A-
+## |     |  |
+## L' =  L--R-
+## |     |  |
+## +-    +--B-  
+
+function contract_from_left(E_L,X,W)
+    @tensor temp_1[:] := E_L[1,-3,-4]  * X[1,-2,-1] 
+    @tensor temp_2[:] := temp_1[-1, -2, -5, 1 ]* conj( X[1, -4,-3] ) 
+    @tensor temp[:] := temp_2[ -1, 2, -3, 3, 1 ] * W[1,-2, 2, 3]
+    return temp
+end
+
+
+function one_site_dmrg(C::MPS, W::MPO,sweeps::Int64)
     
-    L = construct_L(C, W, C)
-    R = construct_R(C, W, C)
+    d = dims(C)[2][2]
+    chi= dims(C)[2][1]
+    
+    L = construct_L(C, W)
+    R = construct_R(C, W)
 
-    global C,L,R
+    #global C,L,R
 
     for sweep in 1:Int(sweeps/2)
         for i in 1:N-1
@@ -74,10 +104,6 @@ function optimize_one_site(A, B, W, E, F, dir, chi )
         ##     |  |  |
         ##     L--W--R
         ##     |  |  |
-        #println("E ",size(E))
-        #println("MPS ",size(v))
-        #println("F ",size(F))
-        #println("W ",size(W))
         @tensor temp_1[ :] := E[ 1, -2, -3] *  v[ 1, -1, -4]  
         @tensor temp_2[:] :=  temp_1[-1,-2,-3,1] * F[1,-4,-5] 
         @tensor temp[:] := temp_2[1, 2, -1, 3,-3] * W[ 2 3 ; 1 -2 ]
