@@ -219,7 +219,7 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
 
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
     U,S,V = svd(V,full=false)
-
+    V=V'
     S=S/norm(S)
     indices = findall(1 .-cumsum(S.^2) .< tol)
     if length(indices)>0
@@ -231,9 +231,9 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     if size(S)[1] > chi
         U = U[:,1:chi]
         S = S[1:chi]
-        V =  V[:,1:chi]
+        V =  V[1:chi,:]
     end
-    V=V'
+
 
     S /= norm(S)
 
@@ -275,7 +275,8 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
 
     U,S,V = svd(V,full=false)
-
+    V=V'
+    
     S /=norm(S)
     indices = findall(1 .-cumsum(S.^2) .< tol)
     if length(indices)>0
@@ -286,10 +287,9 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
     if size(S)[1] > chi
         U = U[:,1:chi]
         S = S[1:chi]
-        V =  V[:,1:chi]
+        V =  V[1:chi,:]
     end
 
-    V=V'
     S /= norm(S)
 
     AR = reshape(V,(:,sAR[2],sAR[3]))

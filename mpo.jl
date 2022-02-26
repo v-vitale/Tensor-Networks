@@ -27,7 +27,7 @@ function MPO_dot(W::MPO,Q::MPO)
         return 0
     end
     temp=MPO()
-    temp.N=N
+    temp.N=W.N
     for i in 1:W.N
         sW=size(W.data[i])
         sQ=size(Q.data[i])
