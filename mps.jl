@@ -76,3 +76,37 @@ function left_normalize!(A::MPS)
         end
     end    
 end
+
+function move_orthogonality_center!(A::MPS,b::Int)
+    right_normalize!(psi)
+    for i in 1:b
+        sA = size(A.data[i])
+        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+        S /= norm(S)
+        V=V'  
+        A.data[i] = reshape( U,( sA[1], sA[2], :)) 
+        if i<A.N
+            S=diagm(S)
+            @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
+        end
+    end    
+end
+
+    
+function compute_entropy(A::MPS)
+    Sent = zeros(A.N)
+    for i in 1:A.N
+        sA = size(A.data[i])
+        U, S, V = svd(reshape(A.data[i],(sA[1]*sA[2], sA[3])), full=false)
+        V=V'
+        S /= norm(S)
+        A.data[i] =  reshape(U,(sA[1], sA[2], :))
+        if i!=A.N-1
+            A.data[i+1] = @tensor B[:] := S[-1,1 ] * V[ 1,2 ] * B[2,-2,-3]
+        end
+        Sent[i] = sum(-S^2*log.(S^2))
+
+    end
+    
+    return Sent
+end
