@@ -3,6 +3,7 @@
 
 include("mps.jl")
 
+    
 # MPO W-matrix is a 4-index tensor, W[i,j,s,t]
 #     s
 #     |
@@ -25,38 +26,40 @@ function MPO_dot(W::MPO,Q::MPO)
         @warn "Empty MPO."
         return 0
     end
-    temp=Dict()
+    temp=MPO()
+    temp.N=N
     for i in 1:W.N
         sW=size(W.data[i])
         sQ=size(Q.data[i])
-        @tensor temp[i][:] := W.data[i][-1,-3,-5,1]*Q.data[i][-2,-4,1,-6]
-        temp[i]=reshape(temp[i],sW[1]*sQ[1],sW[2]*sQ[2],sW[3],sQ[4])
+        @tensor temp.data[i][:] := W.data[i][-1,-3,-5,1]*Q.data[i][-2,-4,1,-6]
+        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[2]*sQ[2],sW[3],sQ[4])
     end
     return temp
 end
 
 Base.:*(W::MPO,Q::MPO)=MPO_dot(W,Q)
 
-function MPO_dot(W::MPO,Q::MPS)
+function MPO_MPS_dot(W::MPO,Q::MPS)
     if isempty(W.data) || isempty(Q.data)
         @warn "Empty MPO."
         return 0
     end
-    temp=MPO()
+
+    temp=MPS()
     temp.N=W.N
     for i in 1:W.N
         sW=size(W.data[i])
         sQ=size(Q.data[i])
-        @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,-5,1]
+        @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,1,-5]
         temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
     end
     return temp
 end
 
-Base.:*(W::MPO,A::MPS)=MPO_dot(W,A)
+Base.:*(W::MPO,A::MPS)=MPO_MPS_dot(W,A)
 
 function trace_MPO(A::MPO)
-    if isempty(W.data)
+    if isempty(A.data)
         @warn "Empty MPO."
         return 0
     end
@@ -70,7 +73,17 @@ end
 
 LinearAlgebra.:tr(A::MPO)= trace_MPO(A)
 
-function Initialize!(s::String,W::MPO,h::Float64,J::Float64,N::Int)
+function adjoint(A::MPO)
+    dagA=copy(A)
+    for i in 1:dagA.N
+       @tensor dagA.data[i][:] := conj(dagA.data[i][-1,-2,-4,-3])
+    end
+    return dagA   
+end
+
+
+
+function Initialize!(s::String,M::MPO,J::Float64,h::Float64,N::Int)
     if s=="Ising"
         d=2
         D=3
@@ -80,32 +93,30 @@ function Initialize!(s::String,W::MPO,h::Float64,J::Float64,N::Int)
         sz = [ 1 0 ; 0 -1 ]
         sx = [ 0 1 ; 1 0 ]
         id = [ 1 0 ; 0 1 ]
-        Wt = im *  zeros(D,D,d,d)
-        Wt1 = im *  zeros(1,D,d,d)
-        Wt2 = im *  zeros(D,1,d,d)
-        Wt[1,1,:,:]=id
-        Wt[2,1,:,:]=sz
-        Wt[3,1,:,:]=-h*sx
-        Wt[3,2,:,:]=-J*sz
-        Wt[3,3,:,:]=id;
+        W = im *  zeros(D,D,d,d)
+        W1 = im *  zeros(1,D,d,d)
+        W2 = im *  zeros(D,1,d,d)
+        W[1,1,:,:]=id
+        W[2,1,:,:]=sz
+        W[3,1,:,:]=-h*sx
+        W[3,2,:,:]=-J*sz
+        W[3,3,:,:]=id
 
-        Wt1[1,1,:,:]=-h*sx
-        Wt1[1,2,:,:]=-J*sz
-        Wt1[1,3,:,:]=id
+        W1[1,1,:,:]=-h*sx
+        W1[1,2,:,:]=-J*sz
+        W1[1,3,:,:]=id
 
-        Wt2[1,1,:,:]=id
-        Wt2[2,1,:,:]=sz
-        Wt2[3,1,:,:]=-h*sx
+        W2[1,1,:,:]=id
+        W2[2,1,:,:]=sz
+        W2[3,1,:,:]=-h*sx
 
-
-        MPO = Dict()
-        MPO[1] = Wt1
+    
+        M.data[1] = W1
         for i in 2:(N-1)
-            MPO[i] = Wt
+            M.data[i] = W
         end
-        MPO[N] = Wt2
-        W.data=MPO
-        W.N=N
+        M.data[N] = W2
+        M.N=N
         return "TFIM MPO"
     else
         @warn "Wrong parameters"
@@ -114,32 +125,31 @@ end
 
 function Initialize!(s::String,W::MPO,N::Int)
     if s=="Magnetization"
-    chi=2
+        chi=2
         d=2
 
         σz = 0.5*[1 0; 0 -1]
         Id2= [1 0; 0 1]
         O2 = [0 0; 0 0]
 
-        W = im *  zeros(chi,chi,d,d)
-        W1 = im *  zeros(1,chi,d,d)
-        W2 = im *  zeros(chi,1,d,d)
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
 
-        W1[1,1,:,:] = σz 
-        W1[1,2,:,:] = Id2
-        W[1,1,:,:]= Id2
-        W[1,2,:,:]= O2
-        W[2,1,:,:]= σz 
-        W[2,2,:,:]= Id2
-        W2[1,1,:,:] = Id2
-        W2[2,1,:,:] = σz 
+        Wt1[1,1,:,:] = σz 
+        Wt1[1,2,:,:] = Id2
+        Wt[1,1,:,:]= Id2
+        Wt[1,2,:,:]= O2
+        Wt[2,1,:,:]= σz 
+        Wt[2,2,:,:]= Id2
+        Wt2[1,1,:,:] = Id2
+        Wt2[2,1,:,:] = σz 
 
-        MPO = Dict()
-        MPO[1] = W1
-        for i in 2:L-1
-            MPO[i] = W
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
         end
-        MPO[L] = W2
+        W.data[N] = Base.copy(Wt2)
         return "Magnetization MPO"
     else
         @warn "Wrong parameters"
@@ -152,29 +162,62 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
 
-        MPO = Dict()
-        MPO[1] = Wt1
+        W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
-            MPO[i] = Wt
+            W.data[i] = Base.copy(Wt)
         end
-        MPO[N] = Wt2
-        W.data=MPO
-        W.N=N
+        W.data[N] = Base.copy(Wt2)
         return "Null MPO"
     elseif s=="Random"
         Wt = im *  rand(chi,chi,d,d)
         Wt1 = im *  rand(1,chi,d,d)
         Wt2 = im *  rand(chi,1,d,d)
 
-        MPO = Dict()
-        MPO[1] = Wt1
+        W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
-            MPO[i] = Wt
+            W.data[i] = Base.copy(Wt)
         end
-        MPO[N] = Wt2
-        W.data=MPO
-        W.N=N
+        W.data[N] = Base.copy(Wt2)
         return "Random MPO"
+    else
+        @warn "Wrong parameters"
+    end
+end
+
+
+function Initialize!(s::String,W::MPO,N::Int)
+    if s=="Local_Haar"
+        chi=1
+        d=2
+        dist = Haar(d)
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] =rand(dist, d)
+        Wt1[1,1,:,:] = rand(dist, d)
+        Wt2[1,1,:,:] = rand(dist, d)
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+    elseif s=="Id"
+        chi=1
+        d=2
+        id= [1 0; 0 1]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
     else
         @warn "Wrong parameters"
     end
@@ -211,7 +254,8 @@ function truncate_MPO(W::MPO,tol::Float64)
             S = S[1:chi]
             V =  V[:,1:chi]
         end
-        S = S/norm(S)
+        V=V'
+        S /= norm(S)
         S *= s_norm
         
         W.data[i] = permutedims(reshape(V,(:,sW[2],sW[3],sW[4])),(1,4,2,3))
@@ -220,4 +264,3 @@ function truncate_MPO(W::MPO,tol::Float64)
     end
     return W
 end
-

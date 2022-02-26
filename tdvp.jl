@@ -1,7 +1,5 @@
 #   Author: V. Vitale
 #   Feb 2022
-    
-
 include("mps.jl")
 include("mpo.jl")
 
@@ -66,95 +64,9 @@ function contract_from_right(E_R::Array,Y::Array,W::Array)
     return temp
 end
 
-
-function one_site_dmrg!(psi::MPS,
-                        W::MPO,
-                        sweeps::Int64)
-
-    right_normalize!(psi)
-
-    d = dims(psi)[2][2]
-    chi = dims(psi)[2][1]
-    L = construct_L(psi, W)
-    R = construct_R(psi, W)
-
-    #global psi,L,R
-    Energy=0
-    for sweep in 1:Int(sweeps/2)
-        for i in 1:psi.N-1
-            Energy,psi.data[i],psi.data[i+1] = optimize_one_site(psi.data[i], psi.data[i+1], W.data[i], L[i], R[i], "right", chi)
-            L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
-        end
-
-        for i in psi.N:-1:2
-            Energy,psi.data[i-1],psi.data[i] = optimize_one_site( psi.data[i-1],psi.data[i], W.data[i], L[i], R[i], "left", chi)
-            R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
-        end
-
-    end
-    println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
-end
-
-
-
-function optimize_one_site(A::Array, B::Array, W::Array, E::Array, F::Array, dir::String, chi::Int )
-    function H_lin(v)
-        ##     +--A--+
-        ##     |  |  |
-        ##     L--W--R
-        ##     |  |  |
-        #println("E ",size(E))
-        #println("MPS ",size(v))
-        #println("F ",size(F))
-        #println("W ",size(W))
-        @tensor temp_1[ :] := E[ 1, -2, -3] *  v[ 1, -1, -4]  
-        @tensor temp_2[:] :=  temp_1[-1,-2,-3,1] * F[1,-4,-5] 
-        @tensor temp[:] := temp_2[1, 2, -1, 3,-3] * W[ 2 3 ; 1 -2 ]
-        return temp
-    end
-
-
-    if (dir == "right" )
-        sA=size(A)
-
-        en,V,info = eigsolve( H_lin , A ,  1  , :SR ; ishermitian = true  )
-        en = en[1]
-        V = V[1]
-        sV = size(V)
-
-        V=reshape(V,(sV[1]*sV[2],sV[3]))#s i j -> i*s, j
-        A,S,V = svd(V,full=false)
-        V=V'
-        A = reshape( A , ( sA[1], sA[2], :) )
-        #"ij,jl,slk->sik"
-        S=diagm(S)
-        @tensor B[:] := S[-1,1 ] * V[ 1,2 ] * B[2,-2,-3] 
-    else
-        sB=size(B)
-        en,V,info = eigsolve( H_lin , B ,  1  , :SR ; ishermitian = true  )
-        en = en[1]
-        V = V[1]
-
-        sV=size(V)
-        V=reshape(V,(sV[1],sV[2]*sV[3]))  #s i j -> i s j -> i, s*j
-
-        U,S,B = svd(V,full=false)
-        B=B'
-        B = reshape(B,(:,sB[2],sB[3]))
-        #"sij,jk,kl->sil"
-        S=diagm(S)
-        @tensor A[:] := A[-1,-2,2] * U[ 2,3 ] * S[ 3,-3 ]  
-    end
-
-    return en, A, B
-
-end
-
-
-
 function two_sites_dmrg!(psi::MPS,
                         W::MPO,
-                        sweeps::Int)
+                        sweeps::Int,dt::Complex,krylovdim::Int)
 
     right_normalize!(psi)
 
@@ -169,32 +81,30 @@ function two_sites_dmrg!(psi::MPS,
         println("Right")
         for i in 1:psi.N-1
             print("->")
-            Energy,psi.data[i],psi.data[i+1] = two_sites_swipe_right( psi.data[i],
-                                                                        psi.data[i+1],
-                                                                        W.data[i],                              
-                                                                        W.data[i+1],
-                                                                        L[i],
-                                                                        R[i+1])
-            L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
+            psi.data[i],psi.data[i+1] = evolve_right( psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
+                                                        L[i], R[i+1], dt, krylovdim)
+            if i!=psi.N-1
+                L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
+                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],-dt,krylovdim)
+            end
         end
         println("->|")
         println("Left")
         for i in psi.N:-1:2
             print("<-")
-            Energy,psi.data[i-1],psi.data[i] = two_sites_swipe_left(  psi.data[i-1],
-                                                                        psi.data[i], 
-                                                                        W.data[i-1], 
-                                                                        W.data[i], 
-                                                                        L[i-1], 
-                                                                        R[i])
-            R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
+            psi.data[i-1],psi.data[i] = evolve_left(  psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
+                                                                L[i-1], R[i], dt, krylovdim)
+            if i!=1
+                R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
+                psi.data[i-1] = local_step( psi.data[i-1], W.data[i-1],
+                                                        L[i-1], R[i-1],-dt,krylovdim)
+            end
         end
         println("|<-")
     end
-    println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
-function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
+function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
     tol=1e-15
 
     sAL = size(AL)
@@ -213,8 +123,8 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
         return temp
     end
 
-    en,V,info = eigsolve( H_lin , A ,  1  , :SR ; ishermitian = true  )
-    en = en[1]
+    #en,V,info = eigsolve( H_lin , A ,  1  , :SR ; issymmetric = true  )
+    V,info = exponentiate( H_lin , -dt ,  A  , :SR ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
     V = V[1]
 
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
@@ -242,10 +152,11 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     S=diagm(S)
     @tensor AR[:] := S[-1,1 ] * V[ 1,-2 ] 
     AR=reshape(AR,(:,sAR[2],sAR[3]))
-    return en, AL, AR
+    return AL, AR
 end
 
-function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
+
+function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
     tol=1e-15
 
     sAL = size(AL)
@@ -268,8 +179,7 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
         return temp
     end
 
-    en,V,info = eigsolve( H_lin , A ,  1  , :SR ; ishermitian = true  )
-    en = en[1]
+    V,info = exponentiate( H_lin , -dt ,  A  , :SR ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
     V = V[1]
     sV=size(V)
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
@@ -297,5 +207,24 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
     S=diagm(S)
     @tensor AL[:] :=  U[ -1,1 ] * S[ 1,-2 ]  
     AL = reshape( AL , ( sAL[1], sAL[2], :) )
-    return en, AL, AR
+    return AL, AR
+end
+    
+function local_step(A::Array, W::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
+    tol=1e-15
+
+    sA = size(A)
+   
+        function H_lin(v)
+        @tensor temp_1[ :] := E[ 1, -2, -3] *  v[ 1, -1, -4]  
+        @tensor temp_2[:] :=  temp_1[-1,-2,-3,1] * F[1,-4,-5] 
+        @tensor temp[:] := temp_2[1, 2, -1, 3,-3] * M[ 2 3 ; 1 -2 ]
+        return temp
+    end
+
+    V,info = exponentiate( H_lin , -dt ,  A  , :SR ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
+    V = V[1]
+
+    A=reshape(V,(sA[1]*sA[2],sA[3]))
+    return A
 end
