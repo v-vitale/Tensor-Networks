@@ -94,19 +94,39 @@ end
 
     
 function compute_entropy(A::MPS)
-    Sent = zeros(A.N)
-    for i in 1:A.N
-        sA = size(A.data[i])
-        U, S, V = svd(reshape(A.data[i],(sA[1]*sA[2], sA[3])), full=false)
-        V=V'
+    M=copy(A)
+    Sent = zeros(M.N)
+    for i in 1:M.N
+        sM = size(M.data[i])
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
         S /= norm(S)
-        A.data[i] =  reshape(U,(sA[1], sA[2], :))
-        if i!=A.N-1
-            A.data[i+1] = @tensor B[:] := S[-1,1 ] * V[ 1,2 ] * B[2,-2,-3]
+        V=V'  
+        M.data[i] = reshape( U,( sM[1], sM[2], :)) 
+        if i<M.N
+            @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
         end
-        Sent[i] = sum(-S^2*log.(S^2))
+        println(S)
+        Sent[i] = sum(-dot(S.^2,log.(S.^2)))
+    end 
 
-    end
+    
+    return Sent
+end
+
+function compute_Renyi2(A::MPS)
+    M=copy(A)
+    Sent = zeros(M.N)
+    for i in 1:M.N
+        sM = size(M.data[i])
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        S /= norm(S)
+        V=V'  
+        M.data[i] = reshape( U,( sM[1], sM[2], :)) 
+        if i<M.N
+            @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
+        end
+        Sent[i] = -log(sum(S.^4))
+    end   
     
     return Sent
 end
