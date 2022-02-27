@@ -11,7 +11,7 @@ using KrylovKit
 using LinearAlgebra
 
 
-function two_sites_dmrg!(psi::MPS,
+function tdvp!(psi::MPS,
                         W::MPO,
                         sweeps::Int,dt::Complex,krylovdim::Int)
 
