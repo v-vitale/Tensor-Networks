@@ -27,10 +27,10 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
         for i in 1:psi.N-1
             print("->")
             psi.data[i],psi.data[i+1] = evolve_right( psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
-                                                        L[i], R[i+1], dt, krylovdim)
+                                                        L[i], R[i+1], dt/2, krylovdim)
             if i!=psi.N-1
                 L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
-                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt,krylovdim)
+                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt/2 ,krylovdim)
             end
         end
         println("->|")
@@ -38,11 +38,11 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
         for i in psi.N:-1:2
             print("<-")
             psi.data[i-1],psi.data[i] = evolve_left(  psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
-                                                                L[i-1], R[i], dt, krylovdim)
+                                                                L[i-1], R[i], dt/2, krylovdim)
             if i!=2
                 R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
                 psi.data[i-1] = local_step( psi.data[i-1], W.data[i-1],
-                                                        L[i-1], R[i-1],dt,krylovdim)
+                                                        L[i-1], R[i-1],dt/2,krylovdim)
             end
         end
         println("|<-")
