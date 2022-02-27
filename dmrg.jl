@@ -107,7 +107,7 @@ function two_sites_dmrg!(psi::MPS,
 
     #global psi,L,R
     Energy=0
-    for sweep in 1:Int(sweeps/2)
+    for sweep in 1:Int(sweeps)
         println("Sweep: ",sweep)
         println("Right")
         for i in 1:psi.N-1
