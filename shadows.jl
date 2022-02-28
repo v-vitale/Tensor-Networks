@@ -95,22 +95,49 @@ function calculate_shadows_MPO(nu::Int,nm::Int,lU::Array,lstr::Array,qubit_set::
 end
 
 
-function calc_dist(rhos::Dict)
-    distrhos=zeros(length(rhos),length(rhos))
-    idx=zeros(Int,length(rhos),length(rhos))
-    
-    for i in 1:length(rhos)
-        for j in i+1:length(rhos)
-            distrhos[i,j]=real(tr(rhos[i,1]*adjoint(rhos[i,1]))-
-                tr(rhos[i,1]*adjoint(rhos[j,1]))-
-                tr(rhos[j,1]*adjoint(rhos[i,1]))+
-                tr(rhos[j,1]*adjoint(rhos[j,1])))^(1/2)
+function calc_dist(rhos::Dict,nu::Int,nm::Int)
+    if nm==1
+        distrhos=zeros(nu,nu)
+        idx=zeros(Int,nu,nu)
+
+        for i in 1:nu
+            for j in i+1:nu
+                distrhos[i,j]=real(tr(rhos[i,1]*adjoint(rhos[i,1]))-
+                    tr(rhos[i,1]*adjoint(rhos[j,1]))-
+                    tr(rhos[j,1]*adjoint(rhos[i,1]))+
+                    tr(rhos[j,1]*adjoint(rhos[j,1])))^(1/2)
+            end
         end
-    end
-    distrhos=distrhos+distrhos'
-    for i in 1:length(rhos)
-        idx[i,:]=sortperm(distrhos[i,:])
-        distrhos[i,:]=distrhos[i,idx[i,:]]
-    end
+        distrhos=distrhos+distrhos'
+        for i in 1:nu
+            idx[i,:]=sortperm(distrhos[i,:])
+            distrhos[i,:]=distrhos[i,idx[i,:]]
+        end
+    else
+        distrhos=zeros(nu*nm,nu*nm)
+        idx=zeros(Int,nu*nm,nu*nm)
+        r1=0
+        for i in 1:nu
+            for ni in 1:nm
+                r1+=1
+                r2=0
+                for j in 1:nm
+                    for nj in 1:nm
+                        r2+=1
+                        if j>i || nj>ni
+                            distrhos[r1,r2]=real(tr(rhos[i,ni]*adjoint(rhos[i,ni]))-
+                                tr(rhos[i,ni]*adjoint(rhos[j,nj]))-
+                                tr(rhos[j,nj]*adjoint(rhos[i,ni]))+
+                                tr(rhos[j,nj]*adjoint(rhos[j,nj])))^(1/2)
+                        end
+                    end
+                end
+            end
+        end
+        distrhos=distrhos+distrhos'
+        for i in 1:length(rhos)
+            idx[i,:]=sortperm(distrhos[i,:])
+            distrhos[i,:]=distrhos[i,idx[i,:]]
+        end
     return distrhos
 end
