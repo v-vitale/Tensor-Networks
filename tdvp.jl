@@ -23,9 +23,8 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
     Energy=0
     for sweep in 1:Int(sweeps)
         println("Sweep: ",sweep)
-        println("Right")
+        println("Right->")
         for i in 1:psi.N-1
-            print("->")
             psi.data[i],psi.data[i+1] = evolve_right( psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
                                                         L[i], R[i+1], dt/2, krylovdim)
             if i!=psi.N-1
@@ -33,10 +32,8 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
                 psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt/2 ,krylovdim)
             end
         end
-        println("->|")
-        println("Left")
+        println("<-Left")
         for i in psi.N:-1:2
-            print("<-")
             psi.data[i-1],psi.data[i] = evolve_left(  psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
                                                                 L[i-1], R[i], dt/2, krylovdim)
             if i!=2
@@ -45,7 +42,6 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
                                                         L[i-1], R[i-1],dt/2,krylovdim)
             end
         end
-        println("|<-")
     end
 end
 

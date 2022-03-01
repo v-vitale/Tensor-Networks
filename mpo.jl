@@ -266,3 +266,59 @@ function truncate_MPO(W::MPO,tol::Float64)
     end
     return W
 end
+
+
+function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::Int,N::Int)
+    chi=k+2
+    if s=="LongRangeIsing"
+        function expfit(x,p)
+            res=0
+            for i in 1:div(length(p),2)
+                res=res.+p[2*i-1]*exp.(-x./p[2*i])
+            end
+            return res
+        end
+        model(x, p) = expfit(x,p)
+        xdata=Array(range(1, stop=N,length=2048))
+        ydata=xdata.^(-alpha);
+        fit =curve_fit(model,r,y,ones(2*k),lower=1e-9zeros(2*k))
+        c = coef(fit)[1:2:end]; λ = coef(fit)[2:2:end]
+        
+        σx = [0 1; 1 0]
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+        
+        Nalpha = 0
+        for i in 1:N
+            for j in i+1:N
+                Nalpha += 1/(j-i)^alpha
+            end
+        end
+        J = J/(N-1)*Nalpha
+                
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        
+        Wt[1, 1, :, :] = Id2
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σx
+            Wt[1+i,1+i,:, :] = exp(-1/λ[i])*Id2
+            Wt[end, 1+i,:, :] = -J*exp(-1/λ[i])*c[i]*σx
+        end
+        Wt[end, 1, :, :] = -hz*σz
+        Wt[end,end,:,:] = Id2
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,2,2))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,2,2))
+    
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Long Range MPO"  
+    else
+        @warn "Wrong parameters"
+    end
+end
