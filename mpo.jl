@@ -74,9 +74,11 @@ end
 LinearAlgebra.:tr(A::MPO)= trace_MPO(A)
 
 function adjoint(A::MPO)
-    dagA=copy(A)
+    #dagA=copy(A)
+    dagA=MPO()
+    dagA.N=A.N
     for i in 1:dagA.N
-       @tensor dagA.data[i][:] := conj(dagA.data[i][-1,-2,-4,-3])
+       @tensor dagA.data[i][:] := conj(A.data[i][-1,-2,-4,-3])
     end
     return dagA   
 end
