@@ -105,7 +105,6 @@ function compute_entropy(A::MPS)
         if i<M.N
             @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
         end
-        println(S)
         Sent[i] = sum(-dot(S.^2,log.(S.^2)))
     end 
 
