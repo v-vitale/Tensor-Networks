@@ -109,9 +109,7 @@ function two_sites_dmrg!(psi::MPS,
     Energy=0
     for sweep in 1:Int(sweeps)
         println("Sweep: ",sweep)
-        println("Right")
         for i in 1:psi.N-1
-            print("->")
             Energy,psi.data[i],psi.data[i+1] = two_sites_swipe_right( psi.data[i],
                                                                         psi.data[i+1],
                                                                         W.data[i],                              
@@ -120,10 +118,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         R[i+1])
             L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
         end
-        println("->|")
-        println("Left")
+
         for i in psi.N:-1:2
-            print("<-")
             Energy,psi.data[i-1],psi.data[i] = two_sites_swipe_left(  psi.data[i-1],
                                                                         psi.data[i], 
                                                                         W.data[i-1], 
@@ -132,7 +128,6 @@ function two_sites_dmrg!(psi::MPS,
                                                                         R[i])
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
-        println("|<-")
     end
     println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end

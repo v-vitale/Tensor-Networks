@@ -10,7 +10,7 @@ using TensorOperations
 using KrylovKit
 using LinearAlgebra
 
-function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
+function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int,ishermitian::Bool)
 
     right_normalize!(psi)
 
@@ -21,30 +21,27 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int)
     #global psi,L,R
     Energy=0
     for sweep in 1:Int(sweeps)
-        println("Sweep: ",sweep)
-        println("Right->")
         for i in 1:psi.N-1
             psi.data[i],psi.data[i+1] = evolve_right( psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
-                                                        L[i], R[i+1], dt/2, krylovdim)
+                                                        L[i], R[i+1], dt/2, krylovdim,ishermitian)
             if i!=psi.N-1
                 L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
-                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt/2 ,krylovdim)
+                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt/2 ,krylovdim,ishermitian)
             end
         end
-        println("<-Left")
         for i in psi.N:-1:2
             psi.data[i-1],psi.data[i] = evolve_left(  psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
-                                                                L[i-1], R[i], dt/2, krylovdim)
+                                                                L[i-1], R[i], dt/2, krylovdim,ishermitian)
             if i!=2
                 R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
                 psi.data[i-1] = local_step( psi.data[i-1], W.data[i-1],
-                                                        L[i-1], R[i-1],dt/2,krylovdim)
+                                                        L[i-1], R[i-1],dt/2,krylovdim,ishermitian)
             end
         end
     end
 end
 
-function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
+function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
     tol=1e-15
 
     sAL = size(AL)
@@ -64,7 +61,7 @@ function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::A
     end
 
     #en,V,info = eigsolve( H_lin , A ,  1  , :SR ; issymmetric = true  )
-    V,info = exponentiate( H_lin , -dt ,  A ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
+    V,info = exponentiate( H_lin , -dt ,  A ; ishermitian = ishermitian, tol=tol ,krylovdim=krylovdim)
 
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
     U,S,V = svd(V,full=false)
@@ -95,7 +92,7 @@ function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::A
 end
 
 
-function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
+function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
     tol=1e-15
 
     sAL = size(AL)
@@ -118,7 +115,7 @@ function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Ar
         return temp
     end
 
-    V,info = exponentiate( H_lin , -dt ,  A ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
+    V,info = exponentiate( H_lin , -dt ,  A ; ishermitian = ishermitian, tol=tol ,krylovdim=krylovdim)
     
     sV=size(V)
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
@@ -149,7 +146,7 @@ function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Ar
     return AL, AR
 end
     
-function local_step(A::Array, M::Array, E::Array, F::Array, dt::Complex, krylovdim::Int)
+function local_step(A::Array, M::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
     tol=1e-15
 
     sA = size(A)
@@ -161,7 +158,7 @@ function local_step(A::Array, M::Array, E::Array, F::Array, dt::Complex, krylovd
         return temp
     end
 
-    V,info = exponentiate( H_lin , dt ,  A ; ishermitian = true, tol=tol ,krylovdim=krylovdim)
+    V,info = exponentiate( H_lin , dt ,  A ; ishermitian = ishermitian, tol=tol ,krylovdim=krylovdim)
 
     A=reshape(V,(sA[1],sA[2],sA[3]))
     return A

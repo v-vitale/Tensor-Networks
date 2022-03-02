@@ -129,3 +129,15 @@ function compute_Renyi2(A::MPS)
     
     return Sent
 end
+
+
+function to_dm(A::MPS)
+    M=MPS()
+    M.N=A.N
+    for i in 1:M.N
+        sA=size(A.data[i]) 
+        @tensor M.data[i][:] := A.data[i][-1,-3,-5]*conj(A.data[i][-2,-4,-6])
+        M.data[i]= reshape(M.data[i],(sA[1]*sA[1],sA[2]*sA[2],sA[3]*sA[3]))
+    end   
+    return M
+end

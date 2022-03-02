@@ -322,3 +322,74 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         @warn "Wrong parameters"
     end
 end
+
+
+function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::Int,N::Int)
+    chi=2*k+2
+    γp=0.001
+    γm=0.001
+    γz=0.001
+    d=4
+    if s=="OpenLongRangeIsing"
+        function expfit(x,p)
+            res=0
+            for i in 1:div(length(p),2)
+                res=res.+p[2*i-1]*exp.(-x./p[2*i])
+            end
+            return res
+        end
+        model(x, p) = expfit(x,p)
+        xdata=Array(range(1, stop=N,length=2048))
+        ydata=xdata.^(-alpha);
+        fit =curve_fit(model,r,y,ones(2*k),lower=1e-9zeros(2*k))
+        c = coef(fit)[1:2:end]; λ = coef(fit)[2:2:end]
+        
+        σx = [0 1; 1 0]
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+        Id4= kron(Id2,Id2)
+        σx1 = kron(σx,Id2)
+        σx2 = kron(Id2,σx)
+        σz1 = kron(σz,Id2)
+        σz2 = kron(Id2,σz)
+        Diss= [-(γm+γp)/2 0 0 γp ; 0 -(γp+2*γz) 0 0; 0 0 -(γm +2*γz) 0; γm 0 0 -(γm+γp)/2]
+        
+        Nalpha = 0
+        for i in 1:N
+            for j in i+1:N
+                Nalpha += 1/(j-i)^alpha
+            end
+        end
+        J = J/(N-1)*Nalpha
+                
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        
+        Wt[1, 1, :, :] = Id4
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σx1
+            Wt[1+i,1+i,:, :] = exp(-1/λ[i])*Id4
+            Wt[end, 1+i,:, :] = -J*exp(-1/λ[i])*c[i]*σx1
+            Wt[1+i+k, 1, :, :] = σx2
+            Wt[1+i+k,1+i+k,:, :] = exp(-1/λ[i])*Id4
+            Wt[end,1+i+k,:, :] = -J*exp(-1/λ[i])*c[i]*σx2
+        end
+
+        Wt[end, 1, :, :] += -hz*σz1-hz*σz2+im*Diss
+        Wt[end,end,:,:] = Id4
+        
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
+  
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Open Long Range MPO"  
+    else
+        @warn "Wrong parameters"
+    end
+end
