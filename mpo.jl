@@ -2,7 +2,7 @@
 #   Feb 2022
 
 include("mps.jl")
-
+using LsqFit
     
 # MPO W-matrix is a 4-index tensor, W[i,j,s,t]
 #     s
@@ -40,9 +40,13 @@ end
 Base.:*(W::MPO,Q::MPO)=MPO_dot(W,Q)
 
 function MPO_MPS_dot(W::MPO,Q::MPS)
-    if isempty(W.data) || isempty(Q.data)
+    if isempty(W.data)
         @warn "Empty MPO."
-        return 0
+        #return 0
+    end
+    if  isempty(Q.data)
+        @warn "Empty MPS."
+        #return 0
     end
 
     temp=MPS()
@@ -147,6 +151,7 @@ function Initialize!(s::String,W::MPO,N::Int)
         Wt2[1,1,:,:] = Id2
         Wt2[2,1,:,:] = σz 
 
+        W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
             W.data[i] = Base.copy(Wt)
@@ -164,6 +169,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
 
+        W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
             W.data[i] = Base.copy(Wt)
@@ -175,6 +181,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
         Wt1 = im *  rand(1,chi,d,d)
         Wt2 = im *  rand(chi,1,d,d)
 
+        W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
             W.data[i] = Base.copy(Wt)
@@ -214,6 +221,7 @@ function Initialize!(s::String,W::MPO,N::Int)
         Wt[1,1,:,:] = id
         Wt1[1,1,:,:] = id
         Wt2[1,1,:,:] = id
+        
         W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
@@ -281,7 +289,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         model(x, p) = expfit(x,p)
         xdata=Array(range(1, stop=N,length=2048))
         ydata=xdata.^(-alpha);
-        fit =curve_fit(model,r,y,ones(2*k),lower=1e-9zeros(2*k))
+        fit =curve_fit(model,xdata,ydata,rand(2*k),lower=1e-9zeros(2*k))
         c = coef(fit)[1:2:end]; λ = coef(fit)[2:2:end]
         
         σx = [0 1; 1 0]
@@ -312,6 +320,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         Wt1  = reshape(Wt[end,:,:,:],(1,chi,2,2))
         Wt2 = reshape(Wt[:,1,:,:],(chi,1,2,2))
     
+        W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
             W.data[i] = Base.copy(Wt)
@@ -324,11 +333,8 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
 end
 
 
-function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::Int,N::Int)
+function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,γp::Float64,γm::Float64,γz::Float64,k::Int,N::Int)
     chi=2*k+2
-    γp=0.001
-    γm=0.001
-    γz=0.001
     d=4
     if s=="OpenLongRangeIsing"
         function expfit(x,p)
@@ -341,9 +347,9 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         model(x, p) = expfit(x,p)
         xdata=Array(range(1, stop=N,length=2048))
         ydata=xdata.^(-alpha);
-        fit =curve_fit(model,r,y,ones(2*k),lower=1e-9zeros(2*k))
+        fit =curve_fit(model,xdata,ydata,ones(2*k),lower=1e-9zeros(2*k))
         c = coef(fit)[1:2:end]; λ = coef(fit)[2:2:end]
-        
+        println(coef(fit))
         σx = [0 1; 1 0]
         σz = [1 0; 0 -1]
         Id2= [1 0; 0 1]
@@ -383,6 +389,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
         Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
   
+        W.N=N
         W.data[1] = Base.copy(Wt1)
         for i in 2:(N-1)
             W.data[i] = Base.copy(Wt)

@@ -131,6 +131,24 @@ function compute_Renyi2(A::MPS)
 end
 
 
+function purity(A::MPS)
+    M=copy(A)
+    Sent = zeros(M.N)
+    for i in 1:M.N
+        sM = size(M.data[i])
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        S /= norm(S)
+        V=V'  
+        M.data[i] = reshape( U,( sM[1], sM[2], :)) 
+        if i<M.N
+            @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
+        end
+        Sent[i] = sum(S.^4)
+    end   
+    
+    return Sent
+end
+
 function to_dm(A::MPS)
     M=MPS()
     M.N=A.N

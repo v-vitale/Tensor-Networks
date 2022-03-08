@@ -33,7 +33,6 @@ function one_site_dmrg!(psi::MPS,
             Energy,psi.data[i-1],psi.data[i] = optimize_one_site( psi.data[i-1],psi.data[i], W.data[i], L[i], R[i], "left", chi)
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
-
     end
     println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
@@ -128,6 +127,7 @@ function two_sites_dmrg!(psi::MPS,
                                                                         R[i])
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
+        
     end
     println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
