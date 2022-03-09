@@ -89,7 +89,7 @@ end
 
 
 
-function Initialize!(s::String,M::MPO,J::Float64,h::Float64,N::Int)
+function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     if s=="Ising"
         d=2
         D=3
@@ -117,17 +117,19 @@ function Initialize!(s::String,M::MPO,J::Float64,h::Float64,N::Int)
         W2[3,1,:,:]=-h*sx
 
     
-        M.data[1] = W1
+        W.data[1] = Base.copy(W1)
         for i in 2:(N-1)
-            M.data[i] = W
+            W.data[i] = Base.copy(W)
         end
-        M.data[N] = W2
-        M.N=N
+        W.data[N] = Base.copy(W2)
+        W.N=N
         return "TFIM MPO"
     else
         @warn "Wrong parameters"
     end
 end
+
+
 
 function Initialize!(s::String,W::MPO,N::Int)
     if s=="Magnetization"
@@ -158,44 +160,39 @@ function Initialize!(s::String,W::MPO,N::Int)
         end
         W.data[N] = Base.copy(Wt2)
         return "Magnetization MPO"
-    else
-        @warn "Wrong parameters"
-    end
-end
+    elseif s=="Neel"
+        h=100
+        d=2
+        D=2
+        id = [ 1 0 ; 0 1 ]
+        sz = [ 1 0 ; 0 -1 ]
+        Wp = im *  zeros(D,D,d,d)
+        Wd = im *  zeros(D,D,d,d)
+        W1 = im *  zeros(1,D,d,d)
+        W2 = im *  zeros(D,1,d,d)
+        
+        Wp[1,1,:,:]=id
+        Wp[2,1,:,:]=-h*sz
+        Wp[2,2,:,:]=id
+        Wd[1,1,:,:]=id
+        Wd[2,1,:,:]=h*sz
+        Wd[2,2,:,:]=id
 
-function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
-    if s=="Zeros"
-        Wt = im *  zeros(chi,chi,d,d)
-        Wt1 = im *  zeros(1,chi,d,d)
-        Wt2 = im *  zeros(chi,1,d,d)
+        W1[1,1,:,:]=-h*sz
+        W1[1,2,:,:]=id
 
-        W.N=N
-        W.data[1] = Base.copy(Wt1)
-        for i in 2:(N-1)
-            W.data[i] = Base.copy(Wt)
+        W2[1,1,:,:]=id
+        W2[2,1,:,:]=h*sz
+
+        W.data[1] = Base.copy(W1)
+        for i in 2:2:(N-1)
+            W.data[i] = Base.copy(Wd)
+            W.data[i+1] = Base.copy(Wp)
         end
-        W.data[N] = Base.copy(Wt2)
-        return "Null MPO"
-    elseif s=="Random"
-        Wt = im *  rand(chi,chi,d,d)
-        Wt1 = im *  rand(1,chi,d,d)
-        Wt2 = im *  rand(chi,1,d,d)
-
+        W.data[N] = Base.copy(W2)
         W.N=N
-        W.data[1] = Base.copy(Wt1)
-        for i in 2:(N-1)
-            W.data[i] = Base.copy(Wt)
-        end
-        W.data[N] = Base.copy(Wt2)
-        return "Random MPO"
-    else
-        @warn "Wrong parameters"
-    end
-end
-
-
-function Initialize!(s::String,W::MPO,N::Int)
-    if s=="Local_Haar"
+        return "Neel"
+    elseif s=="Local_Haar"
         chi=1
         d=2
         dist = Haar(d)
@@ -228,6 +225,36 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
+    else
+        @warn "Wrong parameters"
+    end
+end
+
+function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
+    if s=="Zeros"
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Null MPO"
+    elseif s=="Random"
+        Wt = im *  rand(chi,chi,d,d)
+        Wt1 = im *  rand(1,chi,d,d)
+        Wt2 = im *  rand(chi,1,d,d)
+
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Random MPO"
     else
         @warn "Wrong parameters"
     end

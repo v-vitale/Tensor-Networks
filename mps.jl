@@ -49,6 +49,28 @@ function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     A.data=temp
 end
 
+function Initialize!(s::String,A::MPS,N::Int)
+    chi=1
+    d=2
+    if s=="Neel"
+        temp=Dict()
+        temp[1] = im*zeros(1,d,chi)
+        for i in 2:N-1
+            temp[i]= im*zeros(chi,d,chi)
+        end
+        temp[N] = im*zeros(chi,d,1)
+        
+        temp[1][1,:,1] = [1 0]
+        for i in 2:2:N-1
+            temp[i][1,:,1]= [0 1]
+            temp[i+1][1,:,1]= [1 0]
+        end
+        temp[N][1,:,1] = [0 1]
+        A.N=N
+        A.data=temp
+    end
+end
+
 function right_normalize!(A::MPS)
     for i in A.N:-1:1
         sA = size(A.data[i])
