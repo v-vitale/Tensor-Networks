@@ -89,7 +89,7 @@ end
 
 
 
-function Initialize!(s::String,M::MPO,J::Float64,h::Float64,N::Int)
+function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     if s=="Ising"
         d=2
         D=3
