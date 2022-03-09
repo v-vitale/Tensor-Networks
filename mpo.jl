@@ -89,7 +89,7 @@ end
 
 
 
-function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
+function Initialize!(s::String,M::MPO,J::Float64,h::Float64,N::Int)
     if s=="Ising"
         d=2
         D=3
@@ -99,14 +99,14 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         sz = [ 1 0 ; 0 -1 ]
         sx = [ 0 1 ; 1 0 ]
         id = [ 1 0 ; 0 1 ]
-        W = im *  zeros(D,D,d,d)
+        Wt = im *  zeros(D,D,d,d)
         W1 = im *  zeros(1,D,d,d)
         W2 = im *  zeros(D,1,d,d)
-        W[1,1,:,:]=id
-        W[2,1,:,:]=sz
-        W[3,1,:,:]=-h*sx
-        W[3,2,:,:]=-J*sz
-        W[3,3,:,:]=id
+        Wt[1,1,:,:]=id
+        Wt[2,1,:,:]=sz
+        Wt[3,1,:,:]=-h*sx
+        Wt[3,2,:,:]=-J*sz
+        Wt[3,3,:,:]=id
 
         W1[1,1,:,:]=-h*sx
         W1[1,2,:,:]=-J*sz
@@ -119,7 +119,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     
         W.data[1] = Base.copy(W1)
         for i in 2:(N-1)
-            W.data[i] = Base.copy(W)
+            W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
