@@ -359,6 +359,45 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
     end
 end
 
+function Initialize!(s::String,W::MPO,J::Array,N::Int)
+    chi=5
+    hz=0.
+    if s=="Brydges"
+        c = J[:,1]; λ = J[:,2]
+        
+        σx = [0 1; 1 0]
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+        
+                
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        
+        Wt[1, 1, :, :] = Id2
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σx
+            Wt[1+i,1+i,:, :] = exp(-λ[i])*Id2
+            Wt[end, 1+i,:, :] = -exp(-λ[i])*c[i]*σx
+        end
+        Wt[end, 1, :, :] = -hz*σz
+        Wt[end,end,:,:] = Id2
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,2,2))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,2,2))
+    
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Long Range MPO"  
+    else
+        @warn "Wrong parameters"
+    end
+end
+
 
 function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,γp::Float64,γm::Float64,γz::Float64,k::Int,N::Int)
     chi=2*k+2
