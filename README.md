@@ -5,3 +5,4 @@ Needed:
 - TensorOperations
 - KrylovKit
 - LinearAlgebra
+- LsqFit for Long-range Hamiltonians
