@@ -153,7 +153,7 @@ function compute_Renyi2(A::MPS)
 end
 
 
-function purity(A::MPS)
+function calc_purity(A::MPS)
     M=copy(A)
     Sent = zeros(M.N)
     for i in 1:M.N

@@ -323,13 +323,13 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
         σz = [1 0; 0 -1]
         Id2= [1 0; 0 1]
         
-        Nalpha = 0
-        for i in 1:N
-            for j in i+1:N
-                Nalpha += 1/(j-i)^alpha
-            end
-        end
-        J = J/(N-1)*Nalpha
+        #Nalpha = 0
+        #for i in 1:N
+        #    for j in i+1:N
+        #        Nalpha += 1/(j-i)^alpha
+        #    end
+        #end
+        #J = J/(N-1)*Nalpha
                 
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
@@ -361,19 +361,19 @@ end
 
 function Initialize!(s::String,W::MPO,J::Array,N::Int)
     chi=5
+    k=3
     hz=0.
     if s=="Brydges"
-        c = J[:,1]; λ = J[:,2]
+        c = 0.001*J[:,1]
+        λ = J[:,2]
         
         σx = [0 1; 1 0]
         σz = [1 0; 0 -1]
         Id2= [1 0; 0 1]
-        
                 
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
-
         
         Wt[1, 1, :, :] = Id2
         for i in 1:k
@@ -392,7 +392,7 @@ function Initialize!(s::String,W::MPO,J::Array,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Long Range MPO"  
+        return "Brydges MPO"  
     else
         @warn "Wrong parameters"
     end
