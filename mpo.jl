@@ -466,3 +466,108 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,γp:
         @warn "Wrong parameters"
     end
 end
+
+function Initialize!(s::String,W::MPO,J::Array,N::Int) 
+    if s=="Brydges2"
+        d=2
+        k=3
+        chi=2*k+2
+        hz=0.
+        c = 0.001*J[:,1]
+        λ = J[:,2]
+        
+        σp = [0 1; 0 0]
+        σm = [0 0; 1 0]
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+                
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        
+        Wt[1, 1, :, :] = Id2
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σp
+            Wt[1+i,1+i,:, :] = exp(-λ[i])*Id2
+            Wt[end, 1+i,:, :] = -exp(-λ[i])*c[i]*σm
+            
+            Wt[k+1+i, 1, :, :] = σm
+            Wt[k+1+i,k+1+i,:, :] = exp(-λ[i])*Id2
+            Wt[end, k+1+i,:, :] = -exp(-λ[i])*c[i]*σp
+        end
+        Wt[end, 1, :, :] = -hz*σz
+        Wt[end,end,:,:] = Id2
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
+    
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Brydges MPO"  
+    elseif s=="OpenBrydges2"
+        k=3
+        chi=4*k+2
+        hz=0.
+        d=4
+        γm=(1/1.17)*0.001
+        γx=0.69*0.001
+        
+        c = 0.001*J[:,1]
+        λ = J[:,2]
+        σp = [0 1; 0 0]
+        σm = [0 0; 1 0]
+        σx = [0 1; 1 0]
+        σz = [1 0; 0 1]
+        Id2= [1 0; 0 1]
+
+        Id4= kron(Id2,Id2)
+        σp1 = kron(σp,Id2)
+        σp2 = kron(Id2,σp)
+        σm1 = kron(σm,Id2)
+        σm2 = kron(Id2,σm)
+        σz1 = kron(σz,Id2)
+        σz2 = kron(Id2,σz)
+        σx4 = kron(σx,σx)
+        Diss= γm*kron(σm,σm)-0.5*γm*kron(σp*σm,Id2)-0.5*γm*kron(Id2,σp*σm)+γx*σx4-γx*Id4
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        Wt[1, 1, :, :] = Id4
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σp1
+            Wt[1+i,1+i,:, :] = exp(-λ[i])*Id4
+            Wt[end, 1+i,:, :] = -exp(-λ[i])*c[i]*σm1
+
+            Wt[k+1+i, 1, :, :] = σm1
+            Wt[k+1+i,k+1+i,:, :] = exp(-λ[i])*Id4
+            Wt[end, k+1+i,:, :] = -exp(-λ[i])*c[i]*σp1
+
+            Wt[2*k+1+i, 1, :, :] = σp2
+            Wt[2*k+1+i,2*k+1+i,:, :] = exp(-λ[i])*Id4
+            Wt[end, 2*k+1+i,:, :] = -exp(-λ[i])*c[i]*σm2
+
+            Wt[3*k+1+i, 1, :, :] = σm2
+            Wt[3*k+1+i,3*k+1+i,:, :] = exp(-λ[i])*Id4
+            Wt[end, 3*k+1+i,:, :] = -exp(-λ[i])*c[i]*σp2
+        end
+        Wt[end, 1, :, :] = -im*Diss
+        Wt[end,end,:,:] = Id4
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
+
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Open Brydges MPO"  
+    else
+        @warn "Wrong parameters"
+    end
+end
+
