@@ -84,7 +84,20 @@ function right_normalize!(A::MPS)
         end
     end  
 end
-    
+   
+function right_orthogonalize!(A::MPS)
+    for i in A.N:-1:1
+        sA = size(A.data[i])
+        U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false)
+        V=V'
+        A.data[i] = reshape(V,(:, sA[2], sA[3]))
+        if i>1
+            S=diagm(S)
+            @tensor A.data[i-1][:] := A.data[i-1][-1,-2,2] * U[ 2,3 ] * S[ 3,-3 ]  
+        end
+    end  
+end
+
 function left_normalize!(A::MPS)
     for i in 1:A.N
         sA = size(A.data[i])
@@ -99,8 +112,21 @@ function left_normalize!(A::MPS)
     end    
 end
 
+function left_orthogonalize!(A::MPS)
+    for i in 1:A.N
+        sA = size(A.data[i])
+        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+        V=V'  
+        A.data[i] = reshape( U,( sA[1], sA[2], :)) 
+        if i<A.N
+            S=diagm(S)
+            @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
+        end
+    end    
+end
+
 function move_orthogonality_center!(A::MPS,b::Int)
-    right_normalize!(psi)
+    right_orthogonalize!(psi)
     for i in 1:b
         sA = size(A.data[i])
         U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
@@ -171,7 +197,8 @@ function calc_purity(A::MPS)
     return Sent
 end
 
-function to_dm(A::MPS)
+
+function to_dm_MPS(A::MPS)
     M=MPS()
     M.N=A.N
     for i in 1:M.N
@@ -183,3 +210,24 @@ function to_dm(A::MPS)
 end
 
 
+function rdm_list(A::MPS,r::Array)
+
+    sA=size(A.data[1]) 
+    @tensor rd_rho[:] := A.data[1][-1,-3,-2]
+    rd_rho=reshape(rd_rho,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
+    for j in 2:A.N
+        @tensor M[:] := A.data[j][-1,-3,-2]
+        sA=size(A.data[j])
+        M=reshape(M,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
+        if j ∉ r
+            st=size(rd_rho)
+            sM=size(M)
+            @tensor rd_rho[:] :=rd_rho[-1,1,-3,-5]*M[1,-2,-4,-6]
+            rd_rho=reshape(rd_rho,(st[1],sM[2],st[3]*sM[3],st[4]*sM[4]))
+        elseif j ∈ r
+            @tensor rd_rho[:] :=rd_rho[-1,1,-3,-4]*M[1,-2,2,2]
+        end
+    end 
+    @tensor rd_rho[:] :=rd_rho[1,1,-1,-2]
+    return rd_rho
+end

@@ -10,9 +10,9 @@ using TensorOperations
 using KrylovKit
 using LinearAlgebra
 
-function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int,ishermitian::Bool)
+function tdvp!(psi::MPS, W::MPO,dt::Complex,ishermitian::Bool; krylovdim=10,sweeps=1,tol=1e-15,chimax=128)
 
-    right_normalize!(psi)
+    right_orthogonalize!(psi)
 
     d = dims(psi)[2][2]
     L = construct_L(psi, W)
@@ -22,28 +22,29 @@ function tdvp!(psi::MPS, W::MPO, sweeps::Int,dt::Complex,krylovdim::Int,ishermit
     Energy=0
     for sweep in 1:Int(sweeps)
         for i in 1:psi.N-1
-            psi.data[i],psi.data[i+1] = evolve_right( psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
-                                                        L[i], R[i+1], dt/2, krylovdim,ishermitian)
+            psi.data[i],psi.data[i+1] = evolve_right(psi.data[i],psi.data[i+1],W.data[i],W.data[i+1],
+                                                     L[i], R[i+1], dt/2, krylovdim,ishermitian,tol,chimax)
             if i!=psi.N-1
                 L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
-                psi.data[i+1] = local_step( psi.data[i+1], W.data[i+1], L[i+1], R[i+1],dt/2 ,krylovdim,ishermitian)
+                psi.data[i+1] = local_step(psi.data[i+1], W.data[i+1],
+                                           L[i+1], R[i+1],dt/2 ,krylovdim,ishermitian,tol)
             end
         end
         for i in psi.N:-1:2
-            psi.data[i-1],psi.data[i] = evolve_left(  psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
-                                                                L[i-1], R[i], dt/2, krylovdim,ishermitian)
+            psi.data[i-1],psi.data[i] = evolve_left(psi.data[i-1], psi.data[i], W.data[i-1],  W.data[i],
+                                                    L[i-1], R[i], dt/2, krylovdim,ishermitian,tol,chimax)
             if i!=2
                 R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
-                psi.data[i-1] = local_step( psi.data[i-1], W.data[i-1],
-                                                        L[i-1], R[i-1],dt/2,krylovdim,ishermitian)
+                psi.data[i-1] = local_step(psi.data[i-1], W.data[i-1],
+                                           L[i-1], R[i-1],dt/2,krylovdim,ishermitian,tol)
             end
         end
     end
 end
 
-function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
-    tol=1e-12
+function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool,tol::Float64,chimax::Int)
 
+    
     sAL = size(AL)
     sAR = size(AR)
     @tensor A[:] := AL[-1,-2,1]*AR[1,-3,-4]
@@ -66,14 +67,16 @@ function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::A
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
     U,S,V = svd(V,full=false)
     V=V'
-    S=S/norm(S)
-    indices = findall(1 .-cumsum(S.^2) .< tol)
+    #S=S/norm(S)
+    indices = findall(norm(S) .-cumsum(S.^2) .< tol)
     if length(indices)>0
         chi = indices[1]+1
     else
         chi = size(S)[1]
     end
-
+    if chi>chimax
+        chi=chimax
+    end
     if size(S)[1] > chi
         U = U[:,1:chi]
         S = S[1:chi]
@@ -81,7 +84,7 @@ function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::A
     end
 
 
-    S /= norm(S)
+    #S /= norm(S)
 
     AL = reshape( U , ( sAL[1], sAL[2], :) )
     #"ij,jl,slk->sik"
@@ -92,8 +95,8 @@ function evolve_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::A
 end
 
 
-function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
-    tol=1e-15
+function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool,tol::Float64,chimax::Int)
+
 
     sAL = size(AL)
     sAR = size(AR)
@@ -122,12 +125,15 @@ function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Ar
 
     U,S,V = svd(V,full=false)
     V=V'
-    S /=norm(S)
-    indices = findall(1 .-cumsum(S.^2) .< tol)
+    #S /=norm(S)
+    indices = findall(norm(S) .-cumsum(S.^2) .< tol)
     if length(indices)>0
         chi = indices[1]+1
     else
         chi = size(S)[1]
+    end
+    if chi>chimax
+        chi=chimax
     end
     if size(S)[1] > chi
         U = U[:,1:chi]
@@ -136,7 +142,7 @@ function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Ar
     end
 
 
-    S /= norm(S)
+    #S /= norm(S)
 
     AR = reshape(V,(:,sAR[2],sAR[3]))
 
@@ -146,8 +152,7 @@ function evolve_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Ar
     return AL, AR
 end
     
-function local_step(A::Array, M::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool)
-    tol=1e-15
+function local_step(A::Array, M::Array, E::Array, F::Array, dt::Complex, krylovdim::Int,ishermitian::Bool,tol::Float64)
 
     sA = size(A)
    
