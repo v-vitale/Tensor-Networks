@@ -6,7 +6,7 @@ using KrylovKit
 using LinearAlgebra
 using Random
 using RandomMatrices
-
+using JLD2, FileIO
 abstract type AbstractTN end
 
 """
@@ -22,6 +22,16 @@ Base.:size(m::AbstractTN) = m.N
 
 dims(m::AbstractTN) = Dict([key=>Base.size(m.data[key]) for key in keys(data(m))])
 
+function writeTN(filename::String,m::AbstractTN)
+    save(filename*".jld2", "data", m)
+end
+
+function readTN(filename::String)
+    m=load(filename*".jld2")["data"]
+    return m
+end
+    
+    
 function copy(A::AbstractTN)
     N=length(A)
     if typeof(A)==MPS

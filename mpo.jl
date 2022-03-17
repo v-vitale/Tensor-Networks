@@ -509,11 +509,11 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
 
             Wt[2*k+1+i, 1, :, :] = σp2
             Wt[2*k+1+i,2*k+1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, 2*k+1+i,:, :] = -exp(-λ[i])*c[i]*σm2
+            Wt[end, 2*k+1+i,:, :] = exp(-λ[i])*c[i]*σm2
 
             Wt[3*k+1+i, 1, :, :] = σm2
             Wt[3*k+1+i,3*k+1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, 3*k+1+i,:, :] = -exp(-λ[i])*c[i]*σp2
+            Wt[end, 3*k+1+i,:, :] = exp(-λ[i])*c[i]*σp2
         end
         Wt[end, 1, :, :] = im*Diss
         Wt[end,end,:,:] = Id4

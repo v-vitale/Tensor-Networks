@@ -126,11 +126,11 @@ function left_orthogonalize!(A::MPS)
 end
 
 function move_orthogonality_center!(A::MPS,b::Int)
-    right_orthogonalize!(psi)
+    right_orthogonalize!(A)
     for i in 1:b
         sA = size(A.data[i])
         U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
-        S /= norm(S)
+        #S /= norm(S)
         V=V'  
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
         if i<A.N
@@ -141,13 +141,13 @@ function move_orthogonality_center!(A::MPS,b::Int)
 end
 
     
-function compute_entropy(A::MPS)
+function calc_entropy(A::MPS)
     M=copy(A)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
         U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
-        S /= norm(S)
+        #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
         if i<M.N
@@ -160,13 +160,13 @@ function compute_entropy(A::MPS)
     return Sent
 end
 
-function compute_Renyi2(A::MPS)
+function calc_Renyi2(A::MPS)
     M=copy(A)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
         U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
-        S /= norm(S)
+        #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
         if i<M.N
@@ -185,7 +185,7 @@ function calc_purity(A::MPS)
     for i in 1:M.N
         sM = size(M.data[i])
         U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
-        S /= norm(S)
+        #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
         if i<M.N
@@ -197,6 +197,23 @@ function calc_purity(A::MPS)
     return Sent
 end
 
+function calc_trace(A::MPS)
+    M=copy(A)
+    Sent = zeros(M.N)
+    for i in 1:M.N
+        sM = size(M.data[i])
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        #S /= norm(S)
+        V=V'  
+        M.data[i] = reshape( U,( sM[1], sM[2], :)) 
+        if i<M.N
+            @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
+        end
+        Sent[i] = sum(S.^2)
+    end   
+    
+    return Sent
+end
 
 function to_dm_MPS(A::MPS)
     M=MPS()
@@ -209,25 +226,56 @@ function to_dm_MPS(A::MPS)
     return M
 end
 
-
+"
 function rdm_list(A::MPS,r::Array)
-
+    #move_orthogonality_center!(A,1)
     sA=size(A.data[1]) 
     @tensor rd_rho[:] := A.data[1][-1,-3,-2]
     rd_rho=reshape(rd_rho,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
     for j in 2:A.N
-        @tensor M[:] := A.data[j][-1,-3,-2]
         sA=size(A.data[j])
+        @tensor M[:] := A.data[j][-1,-3,-2]
         M=reshape(M,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
-        if j ∉ r
+        if j ∈ r
             st=size(rd_rho)
             sM=size(M)
             @tensor rd_rho[:] :=rd_rho[-1,1,-3,-5]*M[1,-2,-4,-6]
             rd_rho=reshape(rd_rho,(st[1],sM[2],st[3]*sM[3],st[4]*sM[4]))
-        elseif j ∈ r
+        elseif j ∉ r
             @tensor rd_rho[:] :=rd_rho[-1,1,-3,-4]*M[1,-2,2,2]
         end
     end 
     @tensor rd_rho[:] :=rd_rho[1,1,-1,-2]
+    return rd_rho
+end
+"
+
+function rdm_list(A::MPS,r::Array)
+    #move_orthogonality_center!(A,1)
+    sA=size(A.data[r[1]]) 
+    rd_rho=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+    for j in r[2:end]
+        sA=size(A.data[j])
+        M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+        st=size(rd_rho)
+        sM=size(M)
+        @tensor rd_rho[:] :=rd_rho[-1,-2,-4,1]*M[1,-3,-5,-6]
+        rd_rho=reshape(rd_rho,(st[1],st[2]*sM[2],st[3]*sM[3],sM[4]))
+    end 
+    for j in r[1]-1:-1:1
+        sA=size(A.data[j])
+        M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+        st=size(rd_rho)
+        sM=size(M)
+        @tensor rd_rho[:] :=M[-1,2,2,1]*rd_rho[1,-2,-3,-4]
+    end
+    for j in r[end]+1:A.N
+        sA=size(A.data[j])
+        M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+        st=size(rd_rho)
+        sM=size(M)
+        @tensor rd_rho[:] :=rd_rho[-1,-2,-3,1]*M[1,2,2,-4]
+    end
+    @tensor rd_rho[:] :=rd_rho[1,-1,-2,1]
     return rd_rho
 end
