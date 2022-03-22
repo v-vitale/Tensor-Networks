@@ -50,9 +50,9 @@ function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
 end
 
 function Initialize!(s::String,A::MPS,N::Int)
-    chi=1
-    d=2
-    if s=="Neel"
+    if s=="Brydges_Closed"
+        chi=1
+        d=2
         temp=Dict()
         temp[1] = im*zeros(1,d,chi)
         for i in 2:N-1
@@ -60,12 +60,31 @@ function Initialize!(s::String,A::MPS,N::Int)
         end
         temp[N] = im*zeros(chi,d,1)
         
-        temp[1][1,:,1] = [1 0]
+        temp[1][1,:,1] = [0 1]
         for i in 2:2:N-1
-            temp[i][1,:,1]= [0 1]
-            temp[i+1][1,:,1]= [1 0]
+            temp[i][1,:,1]= [1 0]
+            temp[i+1][1,:,1]= [0 1]
         end
-        temp[N][1,:,1] = [0 1]
+        temp[N][1,:,1] = [1 0]
+        A.N=N
+        A.data=temp
+    elseif s=="Brydges_Open"
+        chi=1
+        d=4
+        p=0.008326
+        temp=Dict()
+        temp[1] = im*zeros(1,d,chi)
+        for i in 2:N-1
+            temp[i]= im*zeros(chi,d,chi)
+        end
+        temp[N] = im*zeros(chi,d,1)
+        
+        temp[1][1,:,1] = reshape([p 0 ; 0 1-p],d)
+        for i in 2:2:N-1
+            temp[i][1,:,1]= reshape([ 1 0 ; 0 0],d)
+            temp[i+1][1,:,1]= reshape([p 0 ; 0 1-p],d)
+        end
+        temp[N][1,:,1] = reshape([ 1 0 ; 0 0],d)
         A.N=N
         A.data=temp
     end
@@ -282,7 +301,6 @@ end
 
 
 function rdm_from_state(A::MPS,r::Array)
-    right_orthogonalize!(A)
     L=ones(1,1)
     for j in 1:r[1]-1
         @tensor L[:] :=L[1,2]*A.data[j][1,3,-3]*conj(A.data[j])[2,3,-4]
@@ -291,17 +309,15 @@ function rdm_from_state(A::MPS,r::Array)
     for j in A.N:-1:r[end]+1
         @tensor R[:] :=A.data[j][-1,3,1]*conj(A.data[j])[-2,3,2]*R[1,2]
     end
-
     @tensor L[:] := L[1,2]*A.data[r[1]][1,-1,-3]*conj(A.data[r[1]])[2,-2,-4]
     @tensor R[:] := A.data[r[end]][-1,-3,1]*conj(A.data[r[end]])[-2,-4,2]*R[1,2];
 
     j=r[1]
-    while ψ.N-2*j>0
+    while A.N-2*j>0
         sA=size(A.data[j+1])
         sL=size(L)
         @tensor L[:] := L[-1,-3,1,2]*A.data[j+1][1,-2,-5]*conj(A.data[j+1])[2,-4,-6]
         L=reshape(L,(sL[1]*sA[2],sL[2]*sA[2],sA[3],sA[3]))
-
         sA=size(A.data[A.N-j])
         sR=size(R)
         @tensor R[:] := A.data[A.N-j][-1,-3,1]*conj(A.data[A.N-j])[-2,-5,2]*R[1,2,-4,-6]
@@ -320,11 +336,12 @@ function rdm_from_dm(A::MPS,r::Array)
         M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
         @tensor L[:] :=L[1]*M[1,2,2,-1]
     end
+    
     R=ones(1)
     for j in A.N:-1:r[end]+1
         sA=size(A.data[j])
         M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
-        @tensor R[:] :=A.data[j][-1,2,2,1]*R[1]
+        @tensor R[:] :=M[-1,2,2,1]*R[1]
     end
 
     sA=size(A.data[r[1]])
@@ -336,19 +353,19 @@ function rdm_from_dm(A::MPS,r::Array)
     @tensor R[:] := M[-1,-2,-3,1]*R[1];
     
     j=r[1]
-    while ψ.N-2*j>0
+    while A.N-2*j>0
         sA=size(A.data[j+1])
         M=reshape(A.data[j+1],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
         sL=size(L)
         @tensor L[:] := L[-1,-3,1]*M[1,-2,-4,-5]
-        L=reshape(L,(sL[1]*sA[2],sL[2]*sA[2],sL[3]))
+        L=reshape(L,(sL[1]*isqrt(sA[2]),sL[2]*isqrt(sA[2]),sL[3]))
 
         sR=size(A.data[A.N-j])
         M=reshape(A.data[A.N-j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
         sR=size(R)
 
-        @tensor R[:] := A.data[A.N-j][-1,-3,-5,1]*R[1,-2,-4]
-        R=reshape(R,(sA[1],sR[2]*sA[2],sR[3]*sA[2]))
+        @tensor R[:] := M[-1,-3,-5,1]*R[1,-2,-4]
+        R=reshape(R,(sA[1],sR[2]*isqrt(sA[2]),sR[3]*isqrt(sA[2])))
         j+=1
     end
     @tensor rd_rho[:] := L[-1,-3,1]*R[1,-2,-4]

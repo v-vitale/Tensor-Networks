@@ -430,6 +430,7 @@ end
 
 function Initialize_Brydges!(s::String,W::MPO,N::Int) 
     J=[223.394 0.778458; 292.381 0.539682; 208.695 0.182969]
+    
     if s=="Closed"
         d=2
         k=3
@@ -450,12 +451,12 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         Wt[1, 1, :, :] = Id2
         for i in 1:k
             Wt[1+i, 1, :, :] = σp
-            Wt[1+i,1+i,:, :] = exp(-λ[i])*Id2
-            Wt[end, 1+i,:, :] = -exp(-λ[i])*c[i]*σm
+            Wt[1+i,1+i,:, :] = λ[i]*Id2
+            Wt[end, 1+i,:, :] = -λ[i]*c[i]*σm
             
             Wt[k+1+i, 1, :, :] = σm
-            Wt[k+1+i,k+1+i,:, :] = exp(-λ[i])*Id2
-            Wt[end, k+1+i,:, :] = -exp(-λ[i])*c[i]*σp
+            Wt[k+1+i,k+1+i,:, :] = λ[i]*Id2
+            Wt[end, k+1+i,:, :] = -λ[i]*c[i]*σp
         end
         Wt[end, 1, :, :] = -hz*σz
         Wt[end,end,:,:] = Id2
