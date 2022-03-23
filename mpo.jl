@@ -528,6 +528,47 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         end
         W.data[N] = Base.copy(Wt2)
         return "Open Brydges MPO"  
+    elseif s=="Trajectories"
+        γm=(1/1.17)*0.001
+        γx=0.69*0.001
+        d=2
+        k=3
+        chi=2*k+2
+        hz=0.
+        c = 0.001*J[:,1]
+        λ = J[:,2]
+        
+        σp = [0 1; 0 0]
+        σm = [0 0; 1 0]
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+                
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        
+        Wt[1, 1, :, :] = Id2
+        for i in 1:k
+            Wt[1+i, 1, :, :] = σp
+            Wt[1+i,1+i,:, :] = λ[i]*Id2
+            Wt[end, 1+i,:, :] = -λ[i]*c[i]*σm
+            
+            Wt[k+1+i, 1, :, :] = σm
+            Wt[k+1+i,k+1+i,:, :] = λ[i]*Id2
+            Wt[end, k+1+i,:, :] = -λ[i]*c[i]*σp
+        end
+        Wt[end, 1, :, :] = -hz*σz-0.5*im*γx*Id2-0.5*im*γm*σp*σm
+        Wt[end,end,:,:] = Id2
+        Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
+        Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
+    
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Brydges MPO"    
     else
         @warn "Wrong parameters"
     end

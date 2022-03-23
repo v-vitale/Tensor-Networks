@@ -9,7 +9,7 @@ function save_rhoi(A::MPS)
     right_normalize!(A)
     p=zeros(A.N)
     @tensor temp[:]:=A.data[1][1,-1,2]*conj(A.data[1][1,-2,2])
-    p[1]=real(temp[2,2])
+    p[1]=real(temp[1,1])
     for i in 1:A.N
         sA = size(A.data[i])
         U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
@@ -19,10 +19,10 @@ function save_rhoi(A::MPS)
             S=diagm(S)
             @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
             @tensor temp[:]:=A.data[i+1][1,-1,2]*conj(A.data[i+1][1,-2,2])
-            p[i+1]=real(temp[2,2])
+            p[i+1]=real(temp[1,1])
         else
             @tensor temp[:]:=A.data[i][1,-1,2]*conj(A.data[i][1,-2,2])
-            p[i]=real(temp[2,2])
+            p[i]=real(temp[1,1])
         end
         
     end   
