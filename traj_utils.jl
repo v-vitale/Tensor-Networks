@@ -30,11 +30,11 @@ function prob_jump(A::MPS,op::Array,γ::Float64)
     return p
 end
 
-function jump_MPO(p::Array,op::Array,γ::Float64)
+function jump_MPO(p::BitArray,op::Array,γ::Float64)
     chi=1
     d=2
     W=MPO()
-    
+    id=[1 0 ; 0 1]
     Wop = im *  zeros(chi,chi,d,d)
     Wop1 = im *  zeros(1,chi,d,d)
     Wop2 = im *  zeros(chi,1,d,d)
@@ -51,19 +51,19 @@ function jump_MPO(p::Array,op::Array,γ::Float64)
     
     W.N=N
     if p[1]==true
-        W.data[1] = Wop1
+        W.data[1] = sqrt(γ)*Wop1
     else
          W.data[1] = WId1
     end
     for i in 2:(N-1)
         if p[i]==true
-            W.data[1] = Wop
+            W.data[i] = sqrt(γ)*Wop
         else
-            W.data[1] = WId
+            W.data[i] = WId
         end
     end
     if p[end]==true
-        W.data[length(p)] = Wop2
+        W.data[length(p)] = sqrt(γ)*Wop2
     else
         W.data[length(p)] = WId2
     end

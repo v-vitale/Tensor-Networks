@@ -309,67 +309,103 @@ function rdm_from_state(A::MPS,r::Array)
     for j in A.N:-1:r[end]+1
         @tensor R[:] :=A.data[j][-1,3,1]*conj(A.data[j])[-2,3,2]*R[1,2]
     end
-    @tensor L[:] := L[1,2]*A.data[r[1]][1,-1,-3]*conj(A.data[r[1]])[2,-2,-4]
-    @tensor R[:] := A.data[r[end]][-1,-3,1]*conj(A.data[r[end]])[-2,-4,2]*R[1,2];
-
-    j=r[1]
-    while A.N-2*j>0
-        sA=size(A.data[j+1])
-        sL=size(L)
-        @tensor L[:] := L[-1,-3,1,2]*A.data[j+1][1,-2,-5]*conj(A.data[j+1])[2,-4,-6]
-        L=reshape(L,(sL[1]*sA[2],sL[2]*sA[2],sA[3],sA[3]))
-        sA=size(A.data[A.N-j])
-        sR=size(R)
-        @tensor R[:] := A.data[A.N-j][-1,-3,1]*conj(A.data[A.N-j])[-2,-5,2]*R[1,2,-4,-6]
-        R=reshape(R,(sA[1],sA[1],sR[3]*sA[2],sR[4]*sA[2]))
-        j+=1
+    
+    if length(r)>1
+        @tensor L[:] := L[1,2]*A.data[r[1]][1,-1,-3]*conj(A.data[r[1]])[2,-2,-4]
+        @tensor R[:] := A.data[r[end]][-1,-3,1]*conj(A.data[r[end]])[-2,-4,2]*R[1,2];
+        j=1
+        while r[1]+j<r[end]-j
+            sA=size(A.data[r[1]+j])
+            sL=size(L)
+            @tensor L[:] := L[-1,-3,1,2]*A.data[r[1]+j][1,-2,-5]*conj(A.data[r[1]+j])[2,-4,-6]
+            L=reshape(L,(sL[1]*sA[2],sL[2]*sA[2],sA[3],sA[3]))
+            sA=size(A.data[r[end]-j])
+            sR=size(R)
+            @tensor R[:] := A.data[r[end]-j][-1,-3,1]*conj(A.data[r[end]-j])[-2,-5,2]*R[1,2,-4,-6]
+            R=reshape(R,(sA[1],sA[1],sR[3]*sA[2],sR[4]*sA[2]))
+            j+=1
+        end
+        if mod(length(r),2)==0
+            @tensor rd_rho[:] := L[-1,-3,1,2]*R[1,2,-2,-4]
+        else
+            sA=size(A.data[r[1]+j])
+            sL=size(L)
+            @tensor L[:] := L[-1,-3,1,2]*A.data[r[1]+j][1,-2,-5]*conj(A.data[r[1]+j])[2,-4,-6]
+            L=reshape(L,(sL[1]*sA[2],sL[2]*sA[2],sA[3],sA[3]))
+            @tensor rd_rho[:] := L[-1,-3,1,2]*R[1,2,-2,-4]
+        end
+        return reshape(rd_rho,(2^length(r),2^length(r)))
+    else
+        @tensor L[:] := L[1,2]*A.data[r[1]][1,-1,3]*conj(A.data[r[1]])[2,-2,4]*R[3,4]
+        return reshape(rd_rho,(2,2))
     end
-    @tensor rd_rho[:] := L[-1,-3,1,2]*R[1,2,-2,-4]
-    return reshape(rd_rho,(2^length(r),2^length(r)))
 end
 
 function rdm_from_dm(A::MPS,r::Array)
-
     L=ones(1)
     for j in 1:r[1]-1
         sA=size(A.data[j])
         M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
         @tensor L[:] :=L[1]*M[1,2,2,-1]
     end
-    
     R=ones(1)
     for j in A.N:-1:r[end]+1
         sA=size(A.data[j])
         M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
         @tensor R[:] :=M[-1,2,2,1]*R[1]
     end
-
-    sA=size(A.data[r[1]])
-    M=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
-        
-    @tensor L[:] := L[1]*M[1,-1,-2,-3]
-    sA=size(A.data[r[end]])
-    M=reshape(A.data[r[end]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
-    @tensor R[:] := M[-1,-2,-3,1]*R[1];
     
-    j=r[1]
-    while A.N-2*j>0
-        sA=size(A.data[j+1])
-        M=reshape(A.data[j+1],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
-        sL=size(L)
-        @tensor L[:] := L[-1,-3,1]*M[1,-2,-4,-5]
-        L=reshape(L,(sL[1]*isqrt(sA[2]),sL[2]*isqrt(sA[2]),sL[3]))
+    if length(r)>1
+        sA=size(A.data[r[1]])
+        M=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
 
-        sR=size(A.data[A.N-j])
-        M=reshape(A.data[A.N-j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
-        sR=size(R)
+        @tensor L[:] := L[1]*M[1,-1,-2,-3]
+        sA=size(A.data[r[end]])
+        M=reshape(A.data[r[end]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+        @tensor R[:] := M[-1,-2,-3,1]*R[1];
+        j=1
+        while r[1]+j<r[end]-j
+            sA=size(A.data[r[1]+j])
+            M=reshape(A.data[j+1],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+            sL=size(L)
+            @tensor L[:] := L[-1,-3,1]*M[1,-2,-4,-5]
+            L=reshape(L,(sL[1]*isqrt(sA[2]),sL[2]*isqrt(sA[2]),sL[3]))
+            
+            sA=size(A.data[r[end]-j])
+            M=reshape(A.data[A.N-j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+            sR=size(R)
 
-        @tensor R[:] := M[-1,-3,-5,1]*R[1,-2,-4]
-        R=reshape(R,(sA[1],sR[2]*isqrt(sA[2]),sR[3]*isqrt(sA[2])))
-        j+=1
+            @tensor R[:] := M[-1,-3,-5,1]*R[1,-2,-4]
+            R=reshape(R,(sA[1],sR[2]*isqrt(sA[2]),sR[3]*isqrt(sA[2])))
+            j+=1
+        end
+        println(j)
+        if mod(length(r),2)==0
+            @tensor rd_rho[:] := L[-1,-3,1]*R[1,-2,-4]
+        else
+            sA=size(A.data[r[1]+j])
+            M=reshape(A.data[j+1],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+            sL=size(L)
+            @tensor L[:] := L[-1,-3,1]*M[1,-2,-4,-5]
+            L=reshape(L,(sL[1]*isqrt(sA[2]),sL[2]*isqrt(sA[2]),sL[3]))
+            
+            @tensor rd_rho[:] :=L[-1,-3,1]*R[1,-2,-4]
+        end
+        return reshape(rd_rho,(2^length(r),2^length(r)))
+    else
+        sA=size(A.data[r[1]])
+        M=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+
+        @tensor L[:] := L[1]*M[1,-1,-2,4]*R[4]
+        return reshape(rd_rho,(2,2))
     end
-    @tensor rd_rho[:] := L[-1,-3,1]*R[1,-2,-4]
-    return reshape(rd_rho,(2^length(r),2^length(r)))
+    
+    L=ones(1)
+    for j in 1:r[1]-1
+        sA=size(A.data[j])
+        M=reshape(A.data[j],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
+        @tensor L[:] :=L[1]*M[1,2,2,-1]
+    end
 end
 
 

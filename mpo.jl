@@ -48,7 +48,7 @@ function MPO_MPS_dot(W::MPO,Q::MPS)
         @warn "Empty MPS."
         #return 0
     end
-
+    
     temp=MPS()
     temp.N=W.N
     for i in 1:W.N
