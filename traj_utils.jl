@@ -131,3 +131,43 @@ function traj_evolution( ψ0::MPS,
     end
     return rdm
 end
+
+
+function single_traj_evolution( ψ0::MPS,
+                    M::MPO,
+                    N::Int,
+                    dt::Complex,
+                    steps::Int;
+                    fs=1,
+                    ls=N,
+                    sweeps=1,
+                    krylovdim=10,
+                    chimax=64,
+                    is_hermitian=false)
+    
+    println("# sites: ",N)
+    println("krylovdim: ",krylovdim)
+    println("max bond dimension: ",chimax)
+    println(steps," steps with ",imag(dt)," timestep")
+    sd=ls-fs
+    println("Calculate rdm of sites [",fs,",",fs,"+j] with j∈[0,",sd,"]")
+    
+    rdm=Dict()
+    ρ=Dict()
+
+    ψt=state_preparation(ψ0)
+    println(1," ")
+    for j in 0:sd
+        rdm[1,Array(fs:fs+j)]=rdm_from_state(ψt,Array(fs:fs+j))
+    end
+    for i in 2:steps
+        println(i," ")
+        ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax)
+        ψt=apply_jump(ψt,dt)
+        for j in 0:sd
+            rdm[i,Array(fs:fs+j)]=rdm_from_state(ψt,Array(fs:fs+j))
+        end
+
+    end
+    return rdm
+end
