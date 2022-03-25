@@ -501,20 +501,20 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         Wt[1, 1, :, :] = Id4
         for i in 1:k
             Wt[1+i, 1, :, :] = σp1
-            Wt[1+i,1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, 1+i,:, :] = -exp(-λ[i])*c[i]*σm1
+            Wt[1+i,1+i,:, :] = λ[i]*Id4
+            Wt[end, 1+i,:, :] = -λ[i]*c[i]*σm1
 
             Wt[k+1+i, 1, :, :] = σm1
-            Wt[k+1+i,k+1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, k+1+i,:, :] = -exp(-λ[i])*c[i]*σp1
+            Wt[k+1+i,k+1+i,:, :] = λ[i]*Id4
+            Wt[end, k+1+i,:, :] = -λ[i]*c[i]*σp1
 
             Wt[2*k+1+i, 1, :, :] = σp2
-            Wt[2*k+1+i,2*k+1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, 2*k+1+i,:, :] = exp(-λ[i])*c[i]*σm2
+            Wt[2*k+1+i,2*k+1+i,:, :] = λ[i]*Id4
+            Wt[end, 2*k+1+i,:, :] = λ[i]*c[i]*σm2
 
             Wt[3*k+1+i, 1, :, :] = σm2
-            Wt[3*k+1+i,3*k+1+i,:, :] = exp(-λ[i])*Id4
-            Wt[end, 3*k+1+i,:, :] = exp(-λ[i])*c[i]*σp2
+            Wt[3*k+1+i,3*k+1+i,:, :] = λ[i]*Id4
+            Wt[end, 3*k+1+i,:, :] = λ[i]*c[i]*σp2
         end
         Wt[end, 1, :, :] = im*Diss
         Wt[end,end,:,:] = Id4
@@ -557,7 +557,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
             Wt[k+1+i,k+1+i,:, :] = λ[i]*Id2
             Wt[end, k+1+i,:, :] = -λ[i]*c[i]*σp
         end
-        Wt[end, 1, :, :] = -hz*σz-0.5*im*γx*Id2-0.5*im*γm*σp*σm
+        Wt[end, 1, :, :] = -hz*σz-0.5*im*γm*σp*σm
         Wt[end,end,:,:] = Id2
         Wt1  = reshape(Wt[end,:,:,:],(1,chi,d,d))
         Wt2 = reshape(Wt[:,1,:,:],(chi,1,d,d))
