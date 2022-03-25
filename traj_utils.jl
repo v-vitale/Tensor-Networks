@@ -88,3 +88,45 @@ function apply_jump(ψ::MPS,dt::Complex)
     right_normalize!(ψ)
     return ψ
 end
+
+function traj_evolution( ψ0::MPS,
+                    M::MPO,
+                    N::Int,
+                    dt::Complex,
+                    steps::Int;
+                    fs=1,
+                    ls=N,
+                    sweeps=1,
+                    krylovdim=10,
+                    chimax=64,
+                    is_hermitian=false,
+                    ntraj=1)
+    
+    println("# sites: ",N)
+    println("krylovdim: ",krylovdim)
+    println("max bond dimension: ",chimax)
+    println("# trajectories: ",ntraj)
+    println(steps," steps with ",imag(dt)," timestep")
+    println("Calculating [",fs,",",fs,"+j] with j∈[0,",ls-fs"]")
+    
+    rdm=Dict()
+    ρ=Dict()
+
+    ψtlist=pmap(k->state_preparation(ψ0),1:ntraj)
+    println(1," ")
+    for j in 0:ls-fs
+        ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
+        rdm[1,Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
+    end
+    for i in 2:steps
+        println(i," ")
+        ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax),1:ntraj)
+        ψtlist=pmap(k->apply_jump(ψtlist[k],dt),1:ntraj)
+        for j in 0:ls-fs
+            ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
+            rdm[i,Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
+        end
+
+    end
+    return rdm
+end
