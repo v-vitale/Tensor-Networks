@@ -7,6 +7,7 @@ using LinearAlgebra
 using Random
 using RandomMatrices
 using JLD2, FileIO
+using NPZ
 abstract type AbstractTN end
 
 """

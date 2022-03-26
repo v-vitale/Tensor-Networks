@@ -132,7 +132,7 @@ function calc_dist(rhos::Array,nu::Int,nm::Int)
     idx=zeros(Int,nu*nm,nu*nm)
 
     for i in 1:nu*nm
-        for j in 1:nu*nm
+        for j in i:nu*nm
             distrhos[i,j]=real(tr(rhos[i]*adjoint(rhos[i]))-
                 tr(rhos[i]*adjoint(rhos[j]))-
                 tr(rhos[j]*adjoint(rhos[i]))+
