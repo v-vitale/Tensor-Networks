@@ -118,7 +118,9 @@ function traj_evolution( ψ0::MPS,
     for j in 0:sd
         ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
         rdm[1,Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
+        npzwrite(dir*"./data/rhoA_"*string(Array(fs:fs+j))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[1,Array(fs:fs+j)])
     end
+    
     for i in 2:steps
         println(i," ")
         ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax),1:ntraj)
@@ -126,6 +128,7 @@ function traj_evolution( ψ0::MPS,
         for j in 0:sd
             ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
             rdm[i,Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
+            npzwrite(dir*"./data/rhoA_"*string(Array(fs:fs+j))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",rdm[i,Array(fs:fs+j)])
         end
 
     end
