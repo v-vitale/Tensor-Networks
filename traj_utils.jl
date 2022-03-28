@@ -100,7 +100,7 @@ function traj_evolution( ψ0::MPS,
                     krylovdim=10,
                     chimax=64,
                     is_hermitian=false,
-                    ntraj=1
+                    ntraj=1,
                     dir="./")
     
     println("# sites: ",N)
