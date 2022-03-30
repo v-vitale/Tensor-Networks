@@ -89,7 +89,7 @@ function apply_jump(ψ::MPS,dt::Complex)
     return ψ
 end
 
-function traj_evolution( ψ0::MPS,
+function traj_evolution(ψ0::MPS,
                     M::MPO,
                     N::Int,
                     dt::Complex,
@@ -116,21 +116,19 @@ function traj_evolution( ψ0::MPS,
 
     ψtlist=pmap(k->state_preparation(ψ0),1:ntraj)
     println(1," ")
-    for j in 0:sd
-        ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
-        rdm[Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
-        npzwrite(dir*"./data/rhoA_"*string(Array(fs:fs+j))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[Array(fs:fs+j)])
-    end
+    ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
+    rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
+        
+    npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[Array(fs:fs+sd)])
     
     for i in 2:steps
         println(i," ")
         ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax),1:ntraj)
         ψtlist=pmap(k->apply_jump(ψtlist[k],dt),1:ntraj)
-        for j in 0:sd
-            ρ[Array(fs:fs+j)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+j)),1:ntraj)
-            rdm[Array(fs:fs+j)]=sum([ρ[Array(fs:fs+j)][k] for k in 1:ntraj])/ntraj
-            npzwrite(dir*"./data/rhoA_"*string(Array(fs:fs+j))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",rdm[Array(fs:fs+j)])
-        end
+       
+        ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
+        rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
+            npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",rdm[Array(fs:fs+sd)])
 
     end
     return rdm
@@ -156,12 +154,12 @@ function single_traj_evolution( ψ0::MPS,
     println("max bond dimension: ",chimax)
     println(steps," steps with ",imag(dt)," timestep")
     sd=ls-fs
-    println("Calculate rdm of sites [",fs,",",fs,"+j] with j∈[0,",sd,"]")
+    println("Calculate rdm of sites [",fs,",",fs+sd,"]")
 
     ψt=state_preparation(ψ0)
     println(1," ")
     ρ=rdm_from_state(ψt,Array(fs:fs+sd))
-        npzwrite(dir*"./data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npy",ρ )
+        npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npy",ρ )
     
     for i in 2:steps
         println(i," ")
@@ -169,7 +167,6 @@ function single_traj_evolution( ψ0::MPS,
         ψt=apply_jump(ψt,dt)
         ρ=rdm_from_state(ψt,Array(fs:fs+sd))
             npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npy",ρ)
-        end
     end
     return "End"
 end
