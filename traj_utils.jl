@@ -3,7 +3,7 @@
   
 include("mps.jl")
 include("mpo.jl")
-
+include("traj_utils.jl");
 
 function prob_jump(A::MPS,op::Array,γ::Float64,dt::Float64)
     right_normalize!(A)
