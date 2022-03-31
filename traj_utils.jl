@@ -107,11 +107,10 @@ function traj_evolution(ψ0::MPS,
     println("# sites: ",N)
     println("krylovdim: ",krylovdim)
     println("max bond dimension: ",chimax)
-    println("# trajectories: ",ntraj)
-    println(steps," steps with ",imag(dt)," timestep")
+    println("sweeps per timestep: ",sweeps)
+    println(steps," steps with ",imag(sweeps*dt)," timestep; divided in ", sweeps," sweeps")
     sd=ls-fs
-    println("Calculate rdm of sites [",fs,",",fs,"+j] with j∈[0,",sd,"]")
-    
+    println("Calculate rdm of sites [",fs,",",fs+sd,"]; saving every ",save_step," steps")
     rdm=Dict()
     ρ=Dict()
 
@@ -156,9 +155,9 @@ function single_traj_evolution( ψ0::MPS,
     println("krylovdim: ",krylovdim)
     println("max bond dimension: ",chimax)
     println("sweeps per timestep: ",sweeps)
-    println(steps," steps with ",imag(sweeps*dt)," timestep, divided in ", sweeps," sweeps")
+    println(steps," steps with ",imag(sweeps*dt)," timestep; divided in ", sweeps," sweeps")
     sd=ls-fs
-    println("Calculate rdm of sites [",fs,",",fs+sd,"]")
+    println("Calculate rdm of sites [",fs,",",fs+sd,"]; saving every ",save_step," steps")
 
     ψt=state_preparation(ψ0)
     println(1," ")
