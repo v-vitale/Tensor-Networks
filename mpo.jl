@@ -429,14 +429,20 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,γp:
 end
 
 function Initialize_Brydges!(s::String,W::MPO,N::Int) 
-    J=[223.394 0.778458; 292.381 0.539682; 208.695 0.182969]
+    if N==20
+        J=[0.001*223.394 0.778458; 0.001*292.381 0.539682; 0.001*208.695 0.182969]
+    elseif N==10
+        J=[1.29066 0.325936; 1.09155 0.0349184; 0.771306 0.640559]
+    else 
+        @warn "Wrong N"
+    end
     
     if s=="Closed"
         d=2
         k=3
         chi=2*k+2
         hz=0.
-        c = 0.001*J[:,1]
+        c = J[:,1]
         λ = J[:,2]
         
         σp = [0 1; 0 0]
