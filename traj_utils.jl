@@ -3,7 +3,7 @@
   
 include("mps.jl")
 include("mpo.jl")
-include("traj_utils.jl");
+include("tdvp.jl");
 
 function prob_jump(A::MPS,op::Array,γ::Float64,dt::Float64)
     right_normalize!(A)
@@ -159,14 +159,14 @@ function single_traj_evolution( ψ0::MPS,
     ψt=state_preparation(ψ0)
     println(1," ")
     ρ=rdm_from_state(ψt,Array(fs:fs+sd))
-        npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npy",ρ )
+        npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npz",ρ )
     
     for i in 2:steps
         println(i," ")
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax)
         ψt=apply_jump(ψt,dt)
         ρ=rdm_from_state(ψt,Array(fs:fs+sd))
-            npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npy",ρ)
+            npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
     end
     return "End"
 end
