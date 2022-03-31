@@ -101,7 +101,8 @@ function traj_evolution(ψ0::MPS,
                     chimax=64,
                     is_hermitian=false,
                     ntraj=1,
-                    dir="./")
+                    dir="./",
+                    save_step=1)
     
     println("# sites: ",N)
     println("krylovdim: ",krylovdim)
@@ -119,17 +120,18 @@ function traj_evolution(ψ0::MPS,
     ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
     rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
         
-    npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[Array(fs:fs+sd)])
+    npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[Array(fs:fs+sd)])
     
     for i in 2:steps
         println(i," ")
         ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax, sweeps=sweeps),1:ntraj)
         ψtlist=pmap(k->apply_jump(ψtlist[k],dt),1:ntraj)
-       
-        ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
-        rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
-            npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",rdm[Array(fs:fs+sd)])
-
+        if mod(steps,save_step)==0
+            ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
+            rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
+            npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",
+                rdm[Array(fs:fs+sd)])
+        end
     end
     return rdm
 end
@@ -147,7 +149,8 @@ function single_traj_evolution( ψ0::MPS,
                     chimax=64,
                     is_hermitian=false,
                     traj_idx=1,
-                    dir="./")
+                    dir="./",
+                    save_step=1)
     
     println("# sites: ",N)
     println("krylovdim: ",krylovdim)
@@ -160,14 +163,16 @@ function single_traj_evolution( ψ0::MPS,
     ψt=state_preparation(ψ0)
     println(1," ")
     ρ=rdm_from_state(ψt,Array(fs:fs+sd))
-    npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npz",ρ )
+    npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npz",ρ )
     
     for i in 2:steps
         println(i," ")
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax,sweeps=sweeps)
         ψt=apply_jump(ψt,sweeps*dt)
-        ρ=rdm_from_state(ψt,Array(fs:fs+sd))
-        npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
+        if mod(steps,save_step)==0
+            ρ=rdm_from_state(ψt,Array(fs:fs+sd))
+            npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
+        end
     end
     return "End"
 end
