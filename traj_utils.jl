@@ -56,6 +56,7 @@ function state_preparation(ψ::MPS)
     σm = [0 0; 1 0];
     σx = [0 1; 1 0];
     Id2= [1 0; 0 1];
+    right_normalize!(ψ)
     γ=0.008326
     pj_list=prob_jump(ψ,σm*σp,γ,1.)
     p_extract=rand(ψ.N)

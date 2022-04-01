@@ -541,7 +541,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         k=3
         chi=2*k+2
         hz=0.
-        c = 0.001*J[:,1]
+        c = J[:,1]
         λ = J[:,2]
         
         σp = [0 1; 0 0]
