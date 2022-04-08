@@ -435,7 +435,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         γx=0.69*0.001
     elseif N==10
         J=[1.29066 0.325936; 1.09155 0.0349184; 0.771306 0.640559]
-        γm=(1/1.5)*0.001
+        γm=(1/1.17)*0.001
         γx=0.69*0.001
     else 
         @warn "Wrong N"
@@ -486,7 +486,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         hz=0.
         d=4
         
-        c = 0.001*J[:,1]
+        c = J[:,1]
         λ = J[:,2]
         σp = [0 1; 0 0]
         σm = [0 0; 1 0]

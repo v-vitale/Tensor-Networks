@@ -58,7 +58,7 @@ function state_preparation(ψ::MPS)
     Id2= [1 0; 0 1];
     right_normalize!(ψ)
     #γ=0.008326
-    γ=0.003
+    γ=0.00415
     #pj_list=prob_jump(ψ,σm*σp,γ,1.)
     pj_list=prob_jump(ψ,σx*σx,γ,1.)
     p_extract=rand(ψ.N)
@@ -122,15 +122,14 @@ function traj_evolution(ψ0::MPS,
     println(1," ")
     ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
     rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
-        
-    npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1"*".npy",rdm[Array(fs:fs+sd)])
-    
+    npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=1_ntraj=$traj_idx"*".npz",ρ )
+     
     for i in 2:steps
         println(i," ")
         ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax, sweeps=sweeps),1:ntraj)
         ψtlist=pmap(k->apply_jump(ψtlist[k],dt),1:ntraj)
         ψtlist=pmap(k->right_normalize!(ψtlist[k]),1:ntraj)
-        if mod(i,save_step)==0
+        if mod(i,save_step)==1
             ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
             rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
             npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",
@@ -174,7 +173,7 @@ function single_traj_evolution( ψ0::MPS,
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax,sweeps=sweeps)
         ψt=apply_jump(ψt,sweeps*dt)
         right_normalize!(ψt)
-        if mod(i,save_step)==0
+        if mod(i,save_step)==1
             ρ=rdm_from_state(ψt,Array(fs:fs+sd))
             npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
         end
