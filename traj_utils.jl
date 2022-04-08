@@ -57,11 +57,14 @@ function state_preparation(ψ::MPS)
     σx = [0 1; 1 0];
     Id2= [1 0; 0 1];
     right_normalize!(ψ)
-    γ=0.008326
-    pj_list=prob_jump(ψ,σm*σp,γ,1.)
+    #γ=0.008326
+    γ=0.003
+    #pj_list=prob_jump(ψ,σm*σp,γ,1.)
+    pj_list=prob_jump(ψ,σx*σx,γ,1.)
     p_extract=rand(ψ.N)
     pj_bool=p_extract.<pj_list
-    jumpo=jump_MPO(pj_bool,σp,γ)
+    #jumpo=jump_MPO(pj_bool,σp,γ)
+    jumpo=jump_MPO(pj_bool,σx,γ)
     ψ=jumpo*ψ
     right_normalize!(ψ)
     return ψ

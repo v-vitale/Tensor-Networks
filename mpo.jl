@@ -431,8 +431,12 @@ end
 function Initialize_Brydges!(s::String,W::MPO,N::Int) 
     if N==20
         J=[0.001*223.394 0.778458; 0.001*292.381 0.539682; 0.001*208.695 0.182969]
+        γm=(1/1.17)*0.001
+        γx=0.69*0.001
     elseif N==10
         J=[1.29066 0.325936; 1.09155 0.0349184; 0.771306 0.640559]
+        γm=(1/1.5)*0.001
+        γx=0.69*0.001
     else 
         @warn "Wrong N"
     end
@@ -481,8 +485,6 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         chi=4*k+2
         hz=0.
         d=4
-        γm=(1/1.17)*0.001
-        γx=0.69*0.001
         
         c = 0.001*J[:,1]
         λ = J[:,2]
@@ -535,8 +537,6 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
         W.data[N] = Base.copy(Wt2)
         return "Open Brydges MPO"  
     elseif s=="Trajectories"
-        γm=(1/1.17)*0.001
-        γx=0.69*0.001
         d=2
         k=3
         chi=2*k+2
