@@ -208,6 +208,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
+        return "Local Haar MPO"
     elseif s=="Id"
         chi=1
         d=2
@@ -225,6 +226,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
+        return "Identity"
     else
         @warn "Wrong parameters"
     end

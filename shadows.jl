@@ -23,8 +23,7 @@ function save_rhoi(A::MPS)
         else
             @tensor temp[:]:=A.data[i][1,-1,2]*conj(A.data[i][1,-2,2])
             p[i]=real(temp[1,1])
-        end
-        
+        end      
     end   
     return p
 end
@@ -60,7 +59,7 @@ function sample_shadows(A::MPS,nu::Int,nm::Int,lA::Int)
                 for (qubit,spin) in enumerate(k)
                     shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
                 end
-                push!(shadows,(WlA*shadow)*adjoint(WlA))
+                push!(shadows,(adjoint(WlA)*shadow)*WlA)
             end
         end
     else
@@ -91,7 +90,7 @@ function sample_shadows(A::MPS,nu::Int,nm::Int,lA::Int)
                 for (qubit,spin) in enumerate(k)
                     shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
                 end
-                push!(shadows,(WlA*shadow)*adjoint(WlA))
+                push!(shadows,(adjoint(WlA)*shadow)*WlA)
             end
         end
     end
@@ -124,6 +123,7 @@ function calculate_shadows_MPO(nu::Int,nm::Int,lU::Array,lstr::Array,qubit_set::
     end
     return rho
 end
+
 
 
 function calc_dist(rhos::Array,nu::Int,nm::Int)
