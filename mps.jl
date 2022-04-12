@@ -245,29 +245,6 @@ function to_dm_MPS(A::MPS)
     return M
 end
 
-"
-function rdm_list(A::MPS,r::Array)
-    #move_orthogonality_center!(A,1)
-    sA=size(A.data[1]) 
-    @tensor rd_rho[:] := A.data[1][-1,-3,-2]
-    rd_rho=reshape(rd_rho,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
-    for j in 2:A.N
-        sA=size(A.data[j])
-        @tensor M[:] := A.data[j][-1,-3,-2]
-        M=reshape(M,(sA[1],sA[3],isqrt(sA[2]),isqrt(sA[2])))
-        if j ∈ r
-            st=size(rd_rho)
-            sM=size(M)
-            @tensor rd_rho[:] :=rd_rho[-1,1,-3,-5]*M[1,-2,-4,-6]
-            rd_rho=reshape(rd_rho,(st[1],sM[2],st[3]*sM[3],st[4]*sM[4]))
-        elseif j ∉ r
-            @tensor rd_rho[:] :=rd_rho[-1,1,-3,-4]*M[1,-2,2,2]
-        end
-    end 
-    @tensor rd_rho[:] :=rd_rho[1,1,-1,-2]
-    return rd_rho
-end
-"
 
 function rdm_rho(A::MPS,r::Array)
     #move_orthogonality_center!(A,1)

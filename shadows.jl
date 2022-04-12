@@ -35,66 +35,26 @@ function sample_shadows(A::MPS,nu::Int,nm::Int,lA::Int)
         shadows=[]
         ket=[[1 ; 0],[0 ; 1]]
         for r in 1:nu
-            WlA=MPO()
-            Initialize!("Local_Haar",WlA,lA)
-
-            if lA<A.N
-                W=MPO()
-                Initialize!("Id",W,A.N)
-                for i in 1:lA
-                    W.data[i]=Base.copy(WlA.data[i])
-                end
-            else
-                W=copy(WlA)
-            end 
+            
+            W=MPO()
+            Initialize!("Local_Haar",W,A.N)
 
             state=W*A
-            p_state=save_rhoi(state)[1:lA]
-            for m in 1:nm        
-                shadow=MPO()
-                Initialize!("Zeros",shadow,2,1,lA)
-                k=zeros(Int,lA)
-                p_extract=rand(lA)
-                k[p_extract.>p_state].=1
-                for (qubit,spin) in enumerate(k)
-                    shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
-                end
-                push!(shadows,(adjoint(WlA)*shadow)*WlA)
+            p_state=save_rhoi(state)
+            shadow=MPO()
+            Initialize!("Zeros",shadow,2,1,A.N)
+            k=zeros(Int,A.N)
+            p_extract=rand(A.N)
+            k[p_extract.>p_state].=1
+            for (qubit,spin) in enumerate(k)
+                println(spin)
+                println(kron(ket[spin+1],ket[spin+1]'))
+                shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
             end
+            push!(shadows,adjoint(W)*(shadow*W))
         end
-    else
-        shadows=[]
-        ket=[[1 ; 0],[0 ; 1]]
-        for r in 1:nu
-            WlA=MPO()
-            Initialize!("Local_Haar",WlA,lA)
-
-            if lA<A.N
-                W=MPO()
-                Initialize!("Id",W,A.N)
-                for i in 1:lA
-                    W.data[i]=Base.copy(WlA.data[i])
-                end
-            else
-                W=copy(WlA)
-            end 
-
-            state=W*A
-            p_state=save_rhoi(state)[1:lA]
-            for m in 1:nm        
-                shadow=MPO()
-                Initialize!("Zeros",shadow,2,1,lA)
-                k=zeros(Int,lA)
-                p_extract=rand(lA)
-                k[p_extract.>p_state].=1
-                for (qubit,spin) in enumerate(k)
-                    shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
-                end
-                push!(shadows,(adjoint(WlA)*shadow)*WlA)
-            end
-        end
+        return shadows
     end
-    return shadows
 end
 
 function calculate_shadows_MPO(nu::Int,nm::Int,lU::Array,lstr::Array,qubit_set::Array)

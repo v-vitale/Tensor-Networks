@@ -78,7 +78,6 @@ end
 LinearAlgebra.:tr(A::MPO)= trace_MPO(A)
 
 function adjoint(A::MPO)
-    #dagA=copy(A)
     dagA=MPO()
     dagA.N=A.N
     for i in 1:dagA.N
@@ -193,21 +192,28 @@ function Initialize!(s::String,W::MPO,N::Int)
         W.N=N
         return "Neel"
     elseif s=="Local_Haar"
+        function CUE(nh)
+            U = (randn(nh,nh)+im*randn(nh,nh))/sqrt(2)
+            q,r = qr(U)
+            d = r[diagind(r)]
+            ph = d./abs.(d)
+            U = ph.*q
+            return U
+        end
+
         chi=1
         d=2
-        dist = Haar(d)
+        #dist = Haar(d)
         Wt = im *  zeros(chi,chi,d,d)
-        Wt1 = im *  zeros(1,chi,d,d)
-        Wt2 = im *  zeros(chi,1,d,d)
-        Wt[1,1,:,:] =rand(dist, d)
-        Wt1[1,1,:,:] = rand(dist, d)
-        Wt2[1,1,:,:] = rand(dist, d)
         W.N=N
-        W.data[1] = Base.copy(Wt1)
+        Wt[1,1,:,:] =CUE(2)#rand(dist, d)
+        W.data[1] = Base.copy(Wt)
         for i in 2:(N-1)
+            Wt[1,1,:,:] =CUE(2)#rand(dist, d)
             W.data[i] = Base.copy(Wt)
         end
-        W.data[N] = Base.copy(Wt2)
+        Wt[1,1,:,:] =CUE(2)#rand(dist, d)
+        W.data[N] = Base.copy(Wt)
         return "Local Haar MPO"
     elseif s=="Id"
         chi=1
