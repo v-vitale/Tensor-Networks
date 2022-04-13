@@ -49,6 +49,31 @@ function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     A.data=temp
 end
 
+function truncate!(A::MPS)
+    for i in 1:A.N-1
+        sA = size(A.data[i])
+        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+        V=V'  
+        S=S/norm(S)
+        indices = findall(1 .-cumsum(S.^2) .< 1e-15)
+        if length(indices)>0
+            chi = indices[1]+1
+        else
+            chi = size(S)[1]
+        end
+    
+        if size(S)[1] > chi
+            U = U[:,1:chi]
+            S = S[1:chi]
+            V =  V[1:chi,:]
+        end
+        println(size(S)[1]," ",chi)
+        A.data[i] = reshape( U,( sA[1], sA[2], :)) 
+        S=diagm(S)
+        @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
+    end   
+end
+
 function Initialize!(s::String,A::MPS,N::Int)
     if s=="Brydges_Closed"
         chi=1

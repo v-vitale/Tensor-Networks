@@ -35,7 +35,6 @@ function sample_shadows(A::MPS,nu::Int,nm::Int,lA::Int)
         shadows=[]
         ket=[[1 ; 0],[0 ; 1]]
         for r in 1:nu
-            
             W=MPO()
             Initialize!("Local_Haar",W,A.N)
 
@@ -47,8 +46,6 @@ function sample_shadows(A::MPS,nu::Int,nm::Int,lA::Int)
             p_extract=rand(A.N)
             k[p_extract.>p_state].=1
             for (qubit,spin) in enumerate(k)
-                println(spin)
-                println(kron(ket[spin+1],ket[spin+1]'))
                 shadow.data[qubit][1,1,:,:]=3*kron(ket[spin+1],ket[spin+1]')-1.0*I(2) 
             end
             push!(shadows,adjoint(W)*(shadow*W))

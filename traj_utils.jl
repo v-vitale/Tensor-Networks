@@ -129,7 +129,7 @@ function traj_evolution(ψ0::MPS,
         ψtlist=pmap(k->tdvp!(ψtlist[k],M,dt,is_hermitian; tol=1e-12,chimax=chimax, sweeps=sweeps),1:ntraj)
         ψtlist=pmap(k->apply_jump(ψtlist[k],dt),1:ntraj)
         ψtlist=pmap(k->right_normalize!(ψtlist[k]),1:ntraj)
-        if mod(i,save_step)==1
+        if mod(i,save_step)==0
             ρ[Array(fs:fs+sd)]=pmap(k->rdm_from_state(ψtlist[k],Array(fs:fs+sd)),1:ntraj)
             rdm[Array(fs:fs+sd)]=sum([ρ[Array(fs:fs+sd)][k] for k in 1:ntraj])/ntraj
             npzwrite(dir*"data/rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*".npy",
@@ -173,7 +173,7 @@ function single_traj_evolution( ψ0::MPS,
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax,sweeps=sweeps)
         ψt=apply_jump(ψt,sweeps*dt)
         right_normalize!(ψt)
-        if mod(i,save_step)==1
+        if mod(i,save_step)==0
             ρ=rdm_from_state(ψt,Array(fs:fs+sd))
             npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
         end
