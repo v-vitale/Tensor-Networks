@@ -23,7 +23,6 @@ function MPS_dot(A::MPS,B::MPS)
     E=ones(1,1)
     for i in 1:A.N
         @tensor temp[:] := E[-1,1]*A.data[i][1,-2,-3] 
-        #@tensor E[:] := temp[1,2,-1] * conj( B.data[i][1,2,-2] )
         @tensor E[:] := temp[1,2,-2] * conj( B.data[i][1,2,-1] )
     end
     return E[1]
@@ -75,7 +74,28 @@ function truncate!(A::MPS)
 end
 
 function Initialize!(s::String,A::MPS,N::Int)
-    if s=="Brydges_Closed"
+    if s=="GHZ"
+        chi=2
+        d=2
+        temp=Dict()
+        temp1 = im*zeros(1,d,chi)
+        temp= im*zeros(chi,d,chi)
+        temp2 = im*zeros(chi,d,1)
+        temp1[1,:,1]=[1 ; 0]
+        temp1[1,:,2] = [0 ; 1]
+        temp[1,:,1]= [1 ; 0]
+        temp[2,:,2]= [0 ; 1]
+        temp2[1,:,1]=[1 ; 0]
+        temp2[2,:,1] = [0 ; 1]
+        
+        A.N=N
+        A.data[1] = temp1
+        for i in 2:N-1
+            A.data[i]=temp
+        end
+        A.data[N]=temp2
+        right_normalize!(A)
+    elseif s=="Brydges_Closed"
         chi=1
         d=2
         temp=Dict()
@@ -85,12 +105,12 @@ function Initialize!(s::String,A::MPS,N::Int)
         end
         temp[N] = im*zeros(chi,d,1)
         
-        temp[1][1,:,1] = [0 1]
+        temp[1][1,:,1] = [0 ; 1]
         for i in 2:2:N-1
-            temp[i][1,:,1]= [1 0]
-            temp[i+1][1,:,1]= [0 1]
+            temp[i][1,:,1]= [1 ; 0]
+            temp[i+1][1,:,1]= [0 ; 1]
         end
-        temp[N][1,:,1] = [1 0]
+        temp[N][1,:,1] = [1 ; 0]
         A.N=N
         A.data=temp
     elseif s=="Brydges_Open"

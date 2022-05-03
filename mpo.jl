@@ -39,6 +39,29 @@ end
 
 Base.:*(W::MPO,Q::MPO)=MPO_dot(W,Q)
 
+++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
+const ⊕ = ++
+
+function sum_MPO(W::MPO,Q::MPO)
+    if isempty(W.data)
+        @warn "Empty MPO."
+        #return 0
+    end
+    if  isempty(Q.data)
+        @warn "Empty MPO."
+        #return 0
+    end
+    temp=MPO()
+    temp.N=W.N
+    for i in 1:W.N
+        tempsum=W.data[i]⊕Q.data[i]
+        temp.data[i] =  tempsum
+    end
+    return temp
+end
+
+Base.:+(A::MPO, B::MPO)=sum_MPO(A,B)
+
 function MPO_MPS_dot(W::MPO,Q::MPS)
     if isempty(W.data)
         @warn "Empty MPO."
@@ -57,12 +80,33 @@ function MPO_MPS_dot(W::MPO,Q::MPS)
         @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,1,-5]
         temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
     end
-    right_normalize!(temp)
-    
     return temp
 end
 
+function MPS_MPO_dot(Q::MPS,W::MPO)
+    if isempty(W.data)
+        @warn "Empty MPO."
+        #return 0
+    end
+    if  isempty(Q.data)
+        @warn "Empty MPS."
+        #return 0
+    end
+    
+    temp=MPS()
+    temp.N=W.N
+    for i in 1:W.N
+        sW=size(W.data[i])
+        sQ=size(Q.data[i])
+        @tensor temp.data[i][:] := W.data[i][-1,-4,1,-3]*Q.data[i][-2,1,-5]
+        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
+    end
+    return temp
+end
+
+
 Base.:*(W::MPO,A::MPS)=MPO_MPS_dot(W,A)
+Base.:*(A::MPS,W::MPO)=MPS_MPO_dot(A,W)
 
 function trace_MPO(A::MPO)
     if isempty(A.data)
@@ -130,6 +174,20 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     end
 end
 
+function Initialize!(s::String,W::MPO,state::Array)
+    if s=="proj"
+        N=length(state)
+        op=[[1 0 ; 0 0],[0 0;0 1]] 
+        chi=1
+        d=2
+        Wt = im *  zeros(chi,chi,d,d)  
+        W.N=N
+        for i in 1:N
+            Wt[1,1,:,:] = op[state[i]+1]
+            W.data[i] = Base.copy(Wt)
+        end
+    end
+end
 
 
 function Initialize!(s::String,W::MPO,N::Int)
@@ -137,7 +195,7 @@ function Initialize!(s::String,W::MPO,N::Int)
         chi=2
         d=2
 
-        σz = 0.5*[1 0; 0 -1]
+        σz = [1 0; 0 -1]
         Id2= [1 0; 0 1]
         O2 = [0 0; 0 0]
 
@@ -205,16 +263,13 @@ function Initialize!(s::String,W::MPO,N::Int)
 
         chi=1
         d=2
-        #dist = Haar(d)
+        dist = Haar(d)
         Wt = im *  zeros(chi,chi,d,d)
         W.N=N
-        Wt[1,1,:,:] =CUE(2)#rand(dist, d)
-        W.data[1] = Base.copy(Wt)
-        for i in 2:(N-1)
-            Wt[1,1,:,:] =CUE(2)#rand(dist, d)
+        for i in 1:N
+            Wt[1,1,:,:] = rand(dist,d)#CUE(2)
             W.data[i] = Base.copy(Wt)
         end
-        Wt[1,1,:,:] =CUE(2)#rand(dist, d)
         W.data[N] = Base.copy(Wt)
         return "Local Haar MPO"
     elseif s=="Id"
@@ -271,7 +326,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
 end
 
 
-function truncate_MPO(W::MPO,tol::Float64)
+function truncate_MPO!(W::MPO;tol=1e-12)
     N=length(W)
     for i in 1:N-1
         temp=permutedims(W.data[i],(1,3,4,2))
@@ -279,7 +334,7 @@ function truncate_MPO(W::MPO,tol::Float64)
         F = qr(reshape(temp,(sW[1]*sW[2]*sW[3],sW[4])))
         q=convert(Matrix{Complex{Float64}}, F.Q)
         r=convert(Matrix{Complex{Float64}}, F.R)
-        q = permutedims(reshape(q,(sW[1],sW[2],sW[3],:)),(1, 4, 2, 3))
+        q = permutedims(reshape(q,(sW[1],sW[2],sW[3],size(q)[2])),(1, 4, 2, 3))
         W.data[i] = q
         @tensor W.data[i+1][:]:= r[-1,1]*W.data[i+1][1,-2,-3,-4]
     end
@@ -288,22 +343,26 @@ function truncate_MPO(W::MPO,tol::Float64)
         temp = permutedims(W.data[i],(1,3,4,2))
         sW = size(temp)
         U,S,V = svd(reshape(temp,(sW[1],sW[2]*sW[3]*sW[4])),full=false)
+        V=V'
         s_norm = norm(S)
         S=S/norm(S)
+        
         indices = findall(1 .-cumsum(S.^2) .< tol)
         if length(indices)>0
             chi = indices[1]+1
         else
             chi = size(S)[1]
         end
+        if chi>chimax
+            chi=chimax
+        end
         if size(S)[1] > chi
             U = U[:,1:chi]
             S = S[1:chi]
-            V =  V[:,1:chi]
+            V =  V[1:chi,:]
         end
-        V=V'
-        S /= norm(S)
-        S *= s_norm
+        S = S/norm(S)
+        S = S*s_norm
         
         W.data[i] = permutedims(reshape(V,(:,sW[2],sW[3],sW[4])),(1,4,2,3))
         temp=U*diagm(S)
