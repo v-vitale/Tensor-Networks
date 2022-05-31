@@ -153,7 +153,8 @@ function single_traj_evolution( ψ0::MPS,
                     is_hermitian=false,
                     traj_idx=1,
                     dir="./",
-                    save_step=1)
+                    save_step=1,
+                    closed=true)
     
     println("# sites: ",N)
     println("krylovdim: ",krylovdim)
@@ -162,8 +163,11 @@ function single_traj_evolution( ψ0::MPS,
     println(steps," steps with ",imag(sweeps*dt)," timestep; divided in ", sweeps," sweeps")
     sd=ls-fs
     println("Calculate rdm of sites [",fs,",",fs+sd,"]; saving every ",save_step," steps")
-
-    ψt=state_preparation(ψ0)
+    if open==false
+        ψt=state_preparation(ψ0)
+    else
+        ψt=copy(ψ0)
+    end
     println(0," ")
     ρ=rdm_from_state(ψt,Array(fs:fs+sd))
     npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=0_ntraj=$traj_idx"*".npz",ρ )
@@ -171,8 +175,13 @@ function single_traj_evolution( ψ0::MPS,
     for i in 1:steps
         println(i," ")
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax,sweeps=sweeps)
-        ψt=apply_jump(ψt,sweeps*dt)
-        right_normalize!(ψt)
+        if open==false
+            ψt=apply_jump(ψt,sweeps*dt)
+            right_normalize!(ψt)
+        else
+            right_normalize!(ψt)
+        end
+        
         if mod(i,save_step)==0
             ρ=rdm_from_state(ψt,Array(fs:fs+sd))
             npzwrite(dir*"rhoA_"*string(Array(fs:fs+sd))*"_N=$N"*"_steps=$steps"*"_chi=$chimax"*"_ts=$i"*"_ntraj=$traj_idx"*".npz",ρ)
