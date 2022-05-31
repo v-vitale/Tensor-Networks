@@ -163,7 +163,7 @@ function single_traj_evolution( ψ0::MPS,
     println(steps," steps with ",imag(sweeps*dt)," timestep; divided in ", sweeps," sweeps")
     sd=ls-fs
     println("Calculate rdm of sites [",fs,",",fs+sd,"]; saving every ",save_step," steps")
-    if open==false
+    if open==true
         ψt=state_preparation(ψ0)
     else
         ψt=copy(ψ0)
@@ -175,7 +175,7 @@ function single_traj_evolution( ψ0::MPS,
     for i in 1:steps
         println(i," ")
         ψt=tdvp!(ψt,M,dt,is_hermitian; tol=1e-12,chimax=chimax,sweeps=sweeps)
-        if open==false
+        if open==true
             ψt=apply_jump(ψt,sweeps*dt)
             right_normalize!(ψt)
         else
