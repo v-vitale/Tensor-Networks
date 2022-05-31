@@ -154,7 +154,7 @@ function single_traj_evolution( ψ0::MPS,
                     traj_idx=1,
                     dir="./",
                     save_step=1,
-                    closed=true)
+                    open=true)
     
     println("# sites: ",N)
     println("krylovdim: ",krylovdim)
