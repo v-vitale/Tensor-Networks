@@ -174,20 +174,48 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     end
 end
 
-function Initialize!(s::String,W::MPO,state::Array)
+function Initialize!(s::String,W::MPO,config::Array,N::Int)
+    if length(config)!= N
+        @warn "Wrong length"
+    end
     if s=="proj"
-        N=length(state)
         op=[[1 0 ; 0 0],[0 0;0 1]] 
         chi=1
         d=2
         Wt = im *  zeros(chi,chi,d,d)  
         W.N=N
         for i in 1:N
-            Wt[1,1,:,:] = op[state[i]+1]
+            Wt[1,1,:,:] = op[config[i]+1]
             W.data[i] = Base.copy(Wt)
         end
     end
 end
+
+
+function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
+    if length(config)!= length(subsystem)
+        @warn "Wrong lengths"
+    end
+    if s=="proj"
+        op = [[1 0 ; 0 0],[0 0;0 1]] 
+        id = [1 0; 0 1]
+        chi=1
+        d=2
+        W.N=N
+        Wt = im *  zeros(chi,chi,d,d)  
+        Wt[1,1,:,:] = id
+        
+        for i in 1:N
+            W.data[i]= Base.copy(Wt)
+        end
+        for (i,j) in enumerate(subsystem)
+            Wt[1,1,:,:] = op[config[i]+1]
+            W.data[j]= Base.copy(Wt)
+        end
+        
+    end
+end
+
 
 
 function Initialize!(s::String,W::MPO,N::Int)

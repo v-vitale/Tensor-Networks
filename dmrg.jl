@@ -107,7 +107,7 @@ function two_sites_dmrg!(psi::MPS,
     #global psi,L,R
     Energy=0
     for sweep in 1:Int(sweeps)
-        println("Sweep: ",sweep)
+        #println("Sweep: ",sweep)
         for i in 1:psi.N-1
             Energy,psi.data[i],psi.data[i+1] = two_sites_swipe_right( psi.data[i],
                                                                         psi.data[i+1],
@@ -129,7 +129,7 @@ function two_sites_dmrg!(psi::MPS,
         end
         
     end
-    println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
+    #println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
 function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
