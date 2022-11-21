@@ -129,7 +129,7 @@ function two_sites_dmrg!(psi::MPS,
         end
         
     end
-    #println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
+    println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
 function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
