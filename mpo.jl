@@ -169,6 +169,42 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         W.data[N] = Base.copy(W2)
         W.N=N
         return "TFIM MPO"
+    elseif s=="Cluster_Ising"
+        d=2
+        D=5
+        id = [ 1 0 ; 0 1 ]
+        sp = [ 0 1 ; 0 0 ]
+        sm = [ 0 0 ; 1 0 ]
+        sz = [ 1 0 ; 0 -1 ]
+        sx = [ 0 1 ; 1 0 ]
+        sy = im *[ 0 -1 ; 1 0 ]
+        Wt = im *  zeros(D,D,d,d)
+        W1 = im *  zeros(1,D,d,d)
+        W2 = im *  zeros(D,1,d,d)
+        Wt[1,1,:,:]=id
+        Wt[2,1,:,:]=sx
+        Wt[4,1,:,:]=sy
+        Wt[3,2,:,:]=-J*sz
+        Wt[5,3,:,:]=sx
+        Wt[5,4,:,:]=-h*sy
+        Wt[5,5,:,:]=id
+
+        W1[1,3,:,:]=sx
+        W1[1,4,:,:]=-h*sy
+        W1[1,5,:,:]=id
+
+        W2[1,1,:,:]=id
+        W2[2,1,:,:]=sx
+        W2[4,1,:,:]=sy
+
+    
+        W.data[1] = Base.copy(W1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(W2)
+        W.N=N
+        return "Cluster Ising MPO"
     else
         @warn "Wrong parameters"
     end

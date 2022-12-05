@@ -65,7 +65,9 @@ function optimize_one_site(A::Array, B::Array, W::Array, E::Array, F::Array, dir
         sV = size(V)
 
         V=reshape(V,(sV[1]*sV[2],sV[3]))#s i j -> i*s, j
-        A,S,V = svd(V,full=false)
+        
+        A,S,V = svd(V,full=false,alg=LinearAlgebra.QRIteration())
+
         V=V'
         A = reshape( A , ( sA[1], sA[2], :) )
         #"ij,jl,slk->sik"
@@ -79,8 +81,9 @@ function optimize_one_site(A::Array, B::Array, W::Array, E::Array, F::Array, dir
 
         sV=size(V)
         V=reshape(V,(sV[1],sV[2]*sV[3]))  #s i j -> i s j -> i, s*j
+        
+        U,S,B = svd(V,full=false,alg=LinearAlgebra.QRIteration())
 
-        U,S,B = svd(V,full=false)
         B=B'
         B = reshape(B,(:,sB[2],sB[3]))
         #"sij,jk,kl->sil"
@@ -96,7 +99,8 @@ end
 
 function two_sites_dmrg!(psi::MPS,
                         W::MPO,
-                        sweeps::Int)
+                        sweeps::Int,
+                        chimax::Int)
 
     right_normalize!(psi)
 
@@ -114,7 +118,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         W.data[i],                              
                                                                         W.data[i+1],
                                                                         L[i],
-                                                                        R[i+1])
+                                                                        R[i+1],
+                                                                        chimax)
             L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
         end
 
@@ -124,7 +129,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         W.data[i-1], 
                                                                         W.data[i], 
                                                                         L[i-1], 
-                                                                        R[i])
+                                                                        R[i],
+                                                                        chimax)
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
         
@@ -132,7 +138,7 @@ function two_sites_dmrg!(psi::MPS,
     println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
-function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
+function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, chimax::Int)
     tol=1e-15
 
     sAL = size(AL)
@@ -156,7 +162,10 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     V = V[1]
 
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
-    U,S,V = svd(V,full=false)
+    
+    U,S,V = svd(V,full=false,alg=LinearAlgebra.QRIteration())
+
+        
     V=V'
     S=S/norm(S)
     indices = findall(1 .-cumsum(S.^2) .< tol)
@@ -165,14 +174,18 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     else
         chi = size(S)[1]
     end
-
+    
+    if chi>chimax
+        chi=chimax
+    end
+    
     if size(S)[1] > chi
         U = U[:,1:chi]
         S = S[1:chi]
         V =  V[1:chi,:]
     end
 
-
+    
     S /= norm(S)
 
     AL = reshape( U , ( sAL[1], sAL[2], :) )
@@ -183,7 +196,7 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     return en, AL, AR
 end
 
-function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array)
+function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array , chimax::Int)
     tol=1e-15
 
     sAL = size(AL)
@@ -211,8 +224,9 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
     V = V[1]
     sV=size(V)
     V=reshape(V,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
+    
+    U,S,V = svd(V,full=false,alg=LinearAlgebra.QRIteration())
 
-    U,S,V = svd(V,full=false)
     V=V'
     
     S /=norm(S)
@@ -222,6 +236,11 @@ function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Arr
     else
         chi = size(S)[1]
     end
+    
+    if chi>chimax
+        chi=chimax
+    end
+    
     if size(S)[1] > chi
         U = U[:,1:chi]
         S = S[1:chi]

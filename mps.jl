@@ -51,7 +51,9 @@ end
 function truncate!(A::MPS)
     for i in 1:A.N-1
         sA = size(A.data[i])
-        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+
+        U,S,V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
+
         V=V'  
         S=S/norm(S)
         indices = findall(1 .-cumsum(S.^2) .< 1e-15)
@@ -138,7 +140,9 @@ end
 function right_normalize!(A::MPS)
     for i in A.N:-1:1
         sA = size(A.data[i])
-        U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false)
+
+        U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
+
         V=V'
         S /= norm(S)
         A.data[i] = reshape(V,(:, sA[2], sA[3]))
@@ -152,7 +156,9 @@ end
 function right_orthogonalize!(A::MPS)
     for i in A.N:-1:1
         sA = size(A.data[i])
-        U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false)
+
+        U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
+
         V=V'
         A.data[i] = reshape(V,(:, sA[2], sA[3]))
         if i>1
@@ -165,7 +171,9 @@ end
 function left_normalize!(A::MPS)
     for i in 1:A.N
         sA = size(A.data[i])
-        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+
+        U,S,V = svd(reshape(A.data[i],sA[1]*sA[2],sA[3]),full=false,alg=LinearAlgebra.QRIteration())
+
         S /= norm(S)
         V=V'  
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
@@ -179,7 +187,9 @@ end
 function left_orthogonalize!(A::MPS)
     for i in 1:A.N
         sA = size(A.data[i])
-        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+
+        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         V=V'  
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
         if i<A.N
@@ -193,7 +203,9 @@ function move_orthogonality_center!(A::MPS,b::Int)
     right_orthogonalize!(A)
     for i in 1:b
         sA = size(A.data[i])
-        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false)
+        
+        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         #S /= norm(S)
         V=V'  
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
@@ -210,7 +222,9 @@ function calc_entropy(A::MPS)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
-        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
@@ -229,7 +243,9 @@ function calc_Renyi2(A::MPS)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
-        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+       
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
@@ -248,7 +264,9 @@ function calc_purity(A::MPS)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
-        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
@@ -266,7 +284,9 @@ function calc_trace(A::MPS)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
-        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false)
+        
+        U,S,V = svd(reshape(M.data[i],(sM[1]*sM[2],sM[3])),full=false,alg=LinearAlgebra.QRIteration())
+
         #S /= norm(S)
         V=V'  
         M.data[i] = reshape( U,( sM[1], sM[2], :)) 
