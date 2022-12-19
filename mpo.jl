@@ -354,6 +354,42 @@ function Initialize!(s::String,W::MPO,N::Int)
         end
         W.data[N] = Base.copy(Wt2)
         return "Identity"
+    elseif s=="Rx"
+        chi=1
+        d=2
+        id= [1/sqrt(2) -1im/sqrt(2); -1im/sqrt(2) 1/sqrt(2)]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Rx"
+    elseif s=="Ry"
+        chi=1
+        d=2
+        id= [1/sqrt(2) -1/sqrt(2); 1/sqrt(2) 1/sqrt(2)]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Rx"
     else
         @warn "Wrong parameters"
     end
