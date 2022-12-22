@@ -39,9 +39,9 @@ Tutorial:
 Tutorial:
 - W=MPO() initializes an empty W MPO "object".
 - Initialize!(W,*args) builds the particular MPO of choice. 
-  Ex: Initialize!("XXZ S=1",W,J,h,L); inizializes an MPO with for the XXZ chain with spin S=1
-      - J and h are two parameters in the MPO,
-      - bond dimension and local dimension are automatically handled.
+  - Ex: Initialize!("XXZ S=1",W,J,h,L); inizializes an MPO with for the XXZ chain with spin S=1:
+    - J and h are two parameters in the MPO,
+    - bond dimension and local dimension are automatically handled.
 
 # dmrg.jl contains algorithm for the diagonalization of mpos
 - one site dmrg
