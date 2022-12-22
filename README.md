@@ -3,7 +3,9 @@ Collection of codes with Tensors Networks. (work in progress)
 
 Author: Vittorio Vitale 
 
-Needed:
+Acknowledgements: Alessandro Santini
+
+Packages Needed:
 - TensorOperations
 - KrylovKit
 - LinearAlgebra
