@@ -201,7 +201,7 @@ end
 
 function move_orthogonality_center!(A::MPS,b::Int)
     right_orthogonalize!(A)
-    for i in 1:b
+    for i in 1:b-1
         sA = size(A.data[i])
         
         U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())

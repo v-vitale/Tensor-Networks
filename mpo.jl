@@ -260,17 +260,17 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         
         Wt[5,2,:,:]=-J*sx
         Wt[5,3,:,:]=-J*sy
-        Wt[5,4,:,:]=-0.5*h*sz
+        Wt[5,4,:,:]=-h*sz
         Wt[5,5,:,:]=id
 
-        W1[1,2,:,:]=-J*sm
-        W1[1,3,:,:]=-J*sp
-        W1[1,4,:,:]=-0.5*h*sz
+        W1[1,2,:,:]=-J*sx
+        W1[1,3,:,:]=-J*sy
+        W1[1,4,:,:]=-h*sz
         W1[1,5,:,:]=id
 
         W2[1,1,:,:]=id
-        W2[2,1,:,:]=sp
-        W2[3,1,:,:]=sm
+        W2[2,1,:,:]=sx
+        W2[3,1,:,:]=sy
         W2[4,1,:,:]=sz
         
     
@@ -322,6 +322,22 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
         end
         for (i,j) in enumerate(subsystem)
             Wt[1,1,:,:] = op[config[i]+1]
+            W.data[j]= Base.copy(Wt)
+        end
+    elseif s=="proj S=1"
+        op = [[1 0 0; 0 0 0; 0 0 0],[0 0 0;0 1 0; 0 0 0],[0 0 0; 0 0 0; 0 0 1]] 
+        id = [1 0 0; 0 1 0; 0 0 1]
+        chi=1
+        d=3
+        W.N=N
+        Wt = im *  zeros(chi,chi,d,d)  
+        Wt[1,1,:,:] = id
+        
+        for i in 1:N
+            W.data[i]= Base.copy(Wt)
+        end
+        for (i,j) in enumerate(subsystem)
+            Wt[1,1,:,:] = op[2-config[i]]
             W.data[j]= Base.copy(Wt)
         end
         
@@ -465,7 +481,43 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Rx"
+        return "Ry"
+    elseif s=="Rx S=1"
+        chi=1
+        d=3
+        id= [1 0 0;  0 0 -1; 0 1 0]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Rx S=1"
+    elseif s=="Ry S=1"
+        chi=1
+        d=3
+        id= [0 0 1; 0 1 0; -1 0 0]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return "Ry S=1"
     else
         @warn "Wrong parameters"
     end
