@@ -1,5 +1,7 @@
 # Tensor-Networks
-Collection of codes with Tensors Networks.
+Collection of codes with Tensors Networks. (work in progress)
+
+Author: Vittorio Vitale 
 
 Needed:
 - TensorOperations
@@ -28,7 +30,7 @@ Needed:
 # tdvp.jl contains all the necessary for doing a time-dependent variational principle algorithm
 - tdvp routines and contractions
 
-# tracj_utils.jl contains all the necessary for doing open dynamics with trajectories
+# traj_utils.jl contains all the necessary for doing open dynamics with trajectories
 - routines for handling the evolution together with the tdvp in tdvp.jl
 - routines for calculating observables on different trajectories in parallel
 
