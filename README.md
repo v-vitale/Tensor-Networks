@@ -3,7 +3,7 @@ Collection of codes with Tensors Networks. (work in progress)
 
 Author: Vittorio Vitale 
 
-Acknowledgements: Alessandro Santini
+Acknowledgements: Alessandro Santini (https://github.com/alessandro-santini)
 
 Packages Needed:
 - TensorOperations
