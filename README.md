@@ -23,10 +23,10 @@ Packages Needed:
 Tutorial:
 - A=MPS() initializes an empty A MPS "object".
 - Initialize!(A,*args) builds the particular MPS of choice. 
-  Ex: Initialize!(A,d,D,L) inizializes an empty MPS with 
-      - bond dimension D, 
-      - local dimension d,
-      - length L.
+  - Ex: Initialize!(A,d,D,L) inizializes an empty MPS with 
+    - bond dimension D, 
+    - local dimension d,
+    - length L.
 
 # mpo.jl contains several MPOs and routines to handle them
 - Transverse Field Ising Chain
