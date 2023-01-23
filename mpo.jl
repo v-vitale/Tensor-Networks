@@ -1049,19 +1049,12 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
 end
 
 
-function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int)
+function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array)
     if s=="J1-J2"
-        function dim_MPO(cols,rows)
+        function dim_MPO(cols::Int,rows::Int,config::Array)
             dim=[]
             nearest=[]
             nnearest=[]
-            config=zeros(Int,rows,cols)
-            for i in 1:2:rows
-                config[i,:]=Array(((i-1)*cols+1):i*cols)
-                if i<rows
-                    config[i+1,:]=Array(((i+1)*cols):-1:(i*cols+1))
-                end
-            end
             for x in 1:cols*rows
                 idx=findall(y->y==x,config)[1]
                 i = idx[1]; j = idx[2]
@@ -1110,7 +1103,7 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
             return dim,nearest,nnearest
         end
 
-        dimW, NN, NNN = dim_MPO(cols,rows)
+        dimW, NN, NNN = dim_MPO(cols,rows,config)
 
         id = [ 1 0 ; 0 1 ]
         sz = [ 1 0 ; 0 -1 ]
@@ -1157,7 +1150,7 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
                 Wt[i][end,k,:,:] = J2*sy
             end
             for k in 5:size(Wt[i])[1]-1
-                Wt[i][k,k-1,:,:] = id
+                Wt[i][k,k-3,:,:] = id
             end
         end
 
@@ -1170,3 +1163,46 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
     end
 end
 
+function draw(s::String,M::MPO,J1::Float64,J2::Float64,site::Int)
+    if s=="J1-J2"
+        for i in 1:dims(M)[site][1]
+            for j in 1:dims(M)[site][2]
+                if M.data[site][i,j,:,:]==J1*sz
+                    print("  σz  ")
+                elseif M.data[site][i,j,:,:]==J1*sx
+                    print("  σx  ")
+                elseif M.data[site][i,j,:,:]==J1*sy
+                    print("  σy  ")
+                elseif M.data[site][i,j,:,:]==J2*sz
+                    print(" J2σz ")
+                elseif M.data[site][i,j,:,:]==J2*sx
+                    print(" J2σx ")
+                elseif M.data[site][i,j,:,:]==J2*sy
+                    print(" J2σy ")
+                elseif M.data[site][i,j,:,:]==id
+                    print("  id  ")
+                else
+                    print("  //  ")
+                end
+            end
+            println()
+        end
+    elseif s=="Ising"
+        for i in 1:dims(M)[site][1]
+            for j in 1:dims(M)[site][2]
+                if M.data[site][i,j,:,:]==J1*sz
+                    print("  Jσz  ")
+                elseif M.data[site][i,j,:,:]==J2*sx
+                    print("  hσx  ")
+                elseif M.data[site][i,j,:,:]==id
+                    print("  id  ")
+                else
+                    print("  //  ")
+                end
+            end
+            println()
+        end
+    else
+        @warn "No method for drawing this MPO"
+    end
+end
