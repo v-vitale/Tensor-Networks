@@ -1048,3 +1048,125 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
     end
 end
 
+
+function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int)
+    if s=="J1-J2"
+        function dim_MPO(cols,rows)
+            dim=[]
+            nearest=[]
+            nnearest=[]
+            config=zeros(Int,rows,cols)
+            for i in 1:2:rows
+                config[i,:]=Array(((i-1)*cols+1):i*cols)
+                if i<rows
+                    config[i+1,:]=Array(((i+1)*cols):-1:(i*cols+1))
+                end
+            end
+            for x in 1:cols*rows
+                idx=findall(y->y==x,config)[1]
+                i = idx[1]; j = idx[2]
+                nn = []
+                if i !=1
+                    push!(nn,config[i-1,j])
+                end
+                if j !=1
+                    push!(nn,config[i,j-1])
+                end
+                if i !=rows
+                    push!(nn,config[i+1,j])
+                end
+                if j !=cols
+                    push!(nn,config[i,j+1])
+                end
+                push!(nearest,nn[nn.>x].-x)
+
+                nnn = []
+                if i !=1 && j !=1
+                    push!(nnn,config[i-1,j-1])
+                end
+                if i !=1 && j !=rows
+                    push!(nnn,config[i-1,j+1])
+                end
+                if i !=rows && j !=1
+                    push!(nnn,config[i+1,j-1])
+                end
+                if i !=cols && j != rows
+                    push!(nnn,config[i+1,j+1])
+                end
+                push!(nnearest,nnn[nnn.>x].-x)
+
+                new_dim=3*maximum(vcat(nn.-x,nnn.-x))+2
+                if x > 1
+                    if new_dim < dim[x-1][2]
+                        push!(dim,(dim[x-1][2],dim[x-1][2]-1,2,2))
+                    else
+                        push!(dim,(dim[x-1][2],new_dim,2,2))
+                    end
+                else
+                    push!(dim,(1,new_dim,2,2))
+                end
+            end
+            dim[end] = (dim[end-1][2],1,2,2)
+            return dim,nearest,nnearest
+        end
+
+        dimW, NN, NNN = dim_MPO(cols,rows)
+
+        id = [ 1 0 ; 0 1 ]
+        sz = [ 1 0 ; 0 -1 ]
+        sx = [ 0 1 ; 1 0 ]
+        sy = im *[ 0 -1 ; 1 0 ]
+        Wt=[]
+        for i in 1:cols*rows
+            push!(Wt,im * zeros(dimW[i]))
+        end
+
+        for k in 3*NN[1].+1
+            Wt[1][1,k-2,:,:] = J1*sz
+            Wt[1][1,k-1,:,:] = J1*sx
+            Wt[1][1,k,:,:] = J1*sy
+        end
+
+        for k in 3*NNN[1].+1
+            Wt[1][1,k-2,:,:] = J2*sz
+            Wt[1][1,k-1,:,:] = J2*sx
+            Wt[1][1,k,:,:] = J2*sy
+        end
+
+        Wt[1][1,end,:,:] = id
+
+        Wt[end][1,1,:,:] = id
+        Wt[end][2,1,:,:] = sz
+        Wt[end][3,1,:,:] = sx
+        Wt[end][4,1,:,:] = sy
+
+        for i in 2:cols*rows-1
+            Wt[i][1,1,:,:]   = id
+            Wt[i][end,end,:,:] = id
+            Wt[i][2,1,:,:]   = sz
+            Wt[i][3,1,:,:]   = sx
+            Wt[i][4,1,:,:]   = sy
+            for k in 3*NN[i].+1
+                Wt[i][end,k-2,:,:] = J1*sz
+                Wt[i][end,k-1,:,:] = J1*sx
+                Wt[i][end,k,:,:] = J1*sy
+            end
+            for k in 3*NNN[i].+1
+                Wt[i][end,k-2,:,:] = J2*sz
+                Wt[i][end,k-1,:,:] = J2*sx
+                Wt[i][end,k,:,:] = J2*sy
+            end
+            for k in 5:size(Wt[i])[1]-1
+                Wt[i][k,k-1,:,:] = id
+            end
+        end
+
+        for i in 1:cols*rows
+            W.data[i] = Base.copy(Wt[i])
+        end
+        W.N=cols*rows
+    else
+        @warn "Wrong parameters"
+    end
+end
+
