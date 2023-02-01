@@ -3,7 +3,8 @@
 
 include("mps.jl")
 using LsqFit
-    
+using ITensors
+
 # MPO W-matrix is a 4-index tensor, W[i,j,s,t]
 #     s
 #     |
@@ -1050,7 +1051,71 @@ end
 
 
 function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array)
-    if s=="J1-J2"
+    if s=="J1-J2_ITensors"
+        N=rows*cols
+        nneigh=Dict()
+        nnneigh=Dict()
+        for x in 1:cols*rows
+            idx=findall(y->y==x,config)[1]
+            i = idx[1]; j = idx[2]
+            nneigh[x]=[]
+            if i !=1
+                push!(nneigh[x],config[i-1,j])
+            end
+            if j !=1
+                push!(nneigh[x],config[i,j-1])
+            end
+            if i !=rows
+                push!(nneigh[x],config[i+1,j])
+            end
+            if j !=cols
+                push!(nneigh[x],config[i,j+1])
+            end
+            nneigh[x]=nneigh[x][nneigh[x].>x]
+            nnneigh[x]=[]
+            if i !=1 && j !=1
+                push!(nnneigh[x],config[i-1,j-1])
+            end
+            if i !=1 && j !=rows
+                push!(nnneigh[x],config[i-1,j+1])
+            end
+            if i !=rows && j !=1
+                push!(nnneigh[x],config[i+1,j-1])
+            end
+            if i !=cols && j != rows
+                push!(nnneigh[x],config[i+1,j+1])
+            end
+            nnneigh[x]=nnneigh[x][nnneigh[x].>x]
+        end
+
+        sites = siteinds("S=1/2",N)
+        ampo = OpSum()
+        for site1 in 1:N
+            for site2 in nneigh[site1]
+                ampo += (J1,"Z",site1,"Z",site2)
+                ampo += (J1,"X",site1,"X",site2)
+                ampo += (J1,"Y",site1,"Y",site2)
+            end
+            for site2 in nnneigh[site1]
+                ampo += (J2,"Z",site1,"Z",site2)
+                ampo += (J2,"X",site1,"X",site2)
+                ampo += (J2,"Y",site1,"Y",site2)
+            end
+        end
+
+        H=ITensors.MPO(ampo,sites)
+        
+        W.N=N
+        W1=Array(H[1],inds(H[1])...)
+        s1=size(W1)
+        W.data[1]=Base.copy(reshape(W1,(1,s1...)))
+        for i in 2:N-1
+            W.data[i]=Base.copy(Array(H[i],inds(H[i])...))
+        end
+        W2=Array(H[N],inds(H[N])...)
+        s2=size(W2)
+        W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+    elseif s=="J1-J2"
         function dim_MPO(cols::Int,rows::Int,config::Array)
             dim=[]
             nearest=[]
