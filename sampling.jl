@@ -67,3 +67,39 @@ function calc_dist(rhos::Array,nu::Int,nm::Int)
 
     return distrhos
 end
+
+
+function sample_configs(ψ,Nr)
+    ψ0=copy(ψ)
+    right_normalize!(ψ0)
+    P=MPO()
+    configs=zeros(ψ.N+1,Nr)
+    for rep in 1:Nr
+        ψ=copy(ψ0)
+        config=[]
+        for site in 1:ψ.N
+            @tensor temp[:]:=ψ.data[site][1,-1,2]*conj(ψ.data[site][1,-2,2])
+            rho=temp/tr(temp)
+            p=real(rho[1,1])
+            if rand() < p 
+                push!(config,0)
+            else
+                push!(config,1)
+            end
+            Initialize!("proj",P,[config[site]],[site],ψ.N)
+            ψ=P*ψ
+            
+            sA = size(ψ.data[site])
+            U,S,V = svd(reshape(ψ.data[site],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+            V=V'  
+            ψ.data[site] = reshape( U,( sA[1], sA[2], :)) 
+            if site<ψ.N
+                S=diagm(S)
+                @tensor ψ.data[site+1][:] := S[-1,1 ] * V[ 1,2 ] * ψ.data[site+1][2,-2,-3] 
+            end
+        end
+        configs[:,rep]=vcat(config,[rand()])
+    end
+    return configs
+end
+
