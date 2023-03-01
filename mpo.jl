@@ -1223,7 +1223,7 @@ function spiral_config(n::Int,m::Int)
     return config
 end
     
-function snake_config(sq,rows,cols)
+function snake_config(sq::Int,rows::Int,cols::Int)
     #=
     sq: which column to start the snake from 
     =#
