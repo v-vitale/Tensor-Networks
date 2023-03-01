@@ -1223,6 +1223,35 @@ function spiral_config(n::Int,m::Int)
     return config
 end
     
+function snake_config(sq,rows,cols)
+    #=
+    sq: which column to start the snake from 
+    =#
+    config=zeros(Int,rows,cols)
+    k=0
+    for i in 1:rows
+        for j in 1:sq
+            k+=1
+            if mod(i,2)==0
+                config[i,j]=k
+            else
+                config[i,sq-j+1]=k
+            end
+        end
+    end
+
+    for j in 1:cols-sq
+        for i in rows:-1:1
+            k+=1
+            if mod(j,2)==1
+                config[i,j+sq]=k
+            else
+                config[rows-i+1,j+sq]=k
+            end
+        end
+    end
+    return config
+end
 
     
 #=
