@@ -1203,14 +1203,14 @@ end
     
 function spiral_config(n::Int,m::Int)
     # Initialize the table with zeros
-    config = zeros(n, m)
+    config = zeros(Int,n, m)
 
     # Define the starting point and the direction of the spiral
     x, y = 1, 1
     dx, dy = 0, 1
 
     # Fill the table with the spiral sequence
-    for i in 1:Int(n*m)
+    for i in 1:n*m
         config[x,y] = i
         nx, ny = x + dx, y + dy
         if nx in 1:n && ny in 1:m && config[nx,ny] == 0
