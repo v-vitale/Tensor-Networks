@@ -99,8 +99,9 @@ end
 
 function two_sites_dmrg!(psi::MPS,
                         W::MPO,
-                        sweeps::Int,
-                        chimax::Int)
+                        sweeps::Int;
+                        chimax=1000,
+                        tol=1e-15)
 
     right_normalize!(psi)
 
@@ -119,7 +120,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         W.data[i+1],
                                                                         L[i],
                                                                         R[i+1],
-                                                                        chimax)
+                                                                        chimax,
+                                                                        tol)
             L[i+1] = contract_from_left(L[i], psi.data[i], W.data[i])
         end
 
@@ -130,7 +132,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         W.data[i], 
                                                                         L[i-1], 
                                                                         R[i],
-                                                                        chimax)
+                                                                        chimax,
+                                                                        tol)
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
         
@@ -138,8 +141,8 @@ function two_sites_dmrg!(psi::MPS,
     println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
-function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, chimax::Int)
-    tol=1e-15
+function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, chimax::Int, tol::Float64)
+    #tol=1e-15
 
     sAL = size(AL)
     sAR = size(AR)
@@ -196,8 +199,8 @@ function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Ar
     return en, AL, AR
 end
 
-function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array , chimax::Int)
-    tol=1e-15
+function two_sites_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array , chimax::Int,tol::Float64)
+    #tol=1e-15
 
     sAL = size(AL)
     sAR = size(AR)
