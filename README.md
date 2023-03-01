@@ -6,10 +6,14 @@ Author: Vittorio Vitale
 Acknowledgements: Alessandro Santini (https://github.com/alessandro-santini)
 
 Packages Needed:
+- Distributed (for parallel computing)
 - TensorOperations
 - KrylovKit
 - LinearAlgebra
 - LsqFit for Long-range Hamiltonians
+- RandomMatrices for Haar random unitaries
+- JLD2, FileIO and NPZ for handling file saving/reading 
+- ITensors for AutoMPO
 
 # mps.jl containes the basics for mps
 - Particular types of MPS:
