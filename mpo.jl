@@ -1138,7 +1138,7 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
             end
         end
         for site1 in 1:N-1
-            ampo += (-J1/r^3,"Z",site1)
+            ampo += (J2,"Z",site1)
         end
         H=ITMPO(ampo,sites)
 
