@@ -1200,6 +1200,29 @@ function draw(s::String,M::MPO,J1::Float64,J2::Float64,site::Int)
         @warn "No method for drawing this MPO"
     end
 end
+    
+function spiral_config(n::Int,m::Int)
+    # Initialize the table with zeros
+    config = zeros(n, m)
+
+    # Define the starting point and the direction of the spiral
+    x, y = 1, 1
+    dx, dy = 0, 1
+
+    # Fill the table with the spiral sequence
+    for i in 1:n*m
+        config[x,y] = i
+        nx, ny = x + dx, y + dy
+        if nx in 1:n && ny in 1:m && config[nx,ny] == 0
+            x, y = nx, ny
+        else
+            dx, dy = dy, -dx
+            x, y = x + dx, y + dy
+        end
+    end
+    return config
+end
+    
 
     
 #=
