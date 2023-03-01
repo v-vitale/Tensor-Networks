@@ -1210,7 +1210,7 @@ function spiral_config(n::Int,m::Int)
     dx, dy = 0, 1
 
     # Fill the table with the spiral sequence
-    for i in 1:n*m
+    for i in 1:Int(n*m)
         config[x,y] = i
         nx, ny = x + dx, y + dy
         if nx in 1:n && ny in 1:m && config[nx,ny] == 0
