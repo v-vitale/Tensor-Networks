@@ -1055,7 +1055,7 @@ end
 
 
 function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array)
-    if s=="J1-J2_ITensors"
+    if s=="J1-J2"
         N=rows*cols
         nneigh=Dict()
         nnneigh=Dict()
