@@ -3,7 +3,7 @@
 
 include("mps.jl")
 using LsqFit
-using ITensors
+using ITensors: AutoMPO,OpSum,MPO
 
 # MPO W-matrix is a 4-index tensor, W[i,j,s,t]
 #     s
