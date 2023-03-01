@@ -1,0 +1,16 @@
+using Pkg
+
+
+Pkg.add("Distributed") (for parallel computing)
+Pkg.add("TensorOperations")
+Pkg.add("KrylovKit")
+Pkg.add("LinearAlgebra")
+Pkg.add("LsqFit") for Long-range Hamiltonians
+Pkg.add("RandomMatrices") for Haar random unitaries
+Pkg.add("JLD2")
+Pkg.add("FileIO")
+Pkg.add("NPZ")
+Pkg.add("ITensors")
+
+
+println("setup completed")
