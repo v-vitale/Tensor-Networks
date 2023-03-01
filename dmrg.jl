@@ -100,7 +100,7 @@ end
 function two_sites_dmrg!(psi::MPS,
                         W::MPO,
                         sweeps::Int;
-                        chimax=1000,
+                        chimax=2048,
                         tol=1e-15)
 
     right_normalize!(psi)
