@@ -24,7 +24,7 @@ Base.:size(m::AbstractTN) = m.N
 dims(m::AbstractTN) = Dict([key=>Base.size(m.data[key]) for key in keys(data(m))])
 
 function writeTN(filename::String,m::AbstractTN)
-    jldsave(filename*".jld2", "data", m)
+    jldsave(filename*".jld2", data=m)
 end
 
 function readTN(filename::String)
