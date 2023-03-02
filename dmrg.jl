@@ -137,9 +137,8 @@ function two_sites_dmrg!(psi::MPS,
                                                                         tol)
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
-        
+        println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))    
     end
-    println("Done! Energy= ",real(Energy),"; Variance: ",real(psi*(W*(W*psi))-(psi*(W*psi))^2))
 end
 
 function two_sites_swipe_right(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array, chimax::Int, tol::Float64)
