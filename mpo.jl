@@ -1253,6 +1253,22 @@ function snake_config(sq::Int,rows::Int,cols::Int)
     return config
 end
 
+
+  function snake_config_square(nrows::Int,ncols::Int)
+      config=zeros(nrows,ncols)
+      config[1,1]=1
+      for i in 2:ncols
+          config[i,i]=config[i-1,i-1]+2*(i-1)
+          if mod(i,2)==0
+              config[i-1:-1:1,i]=[config[i,i]-j for j in 1:i-1]
+              config[i,i-1:-1:1]=[config[i,i]+j for j in 1:i-1]
+          else
+              config[i-1:-1:1,i]=[config[i,i]+j for j in 1:i-1]
+              config[i,i-1:-1:1]=[config[i,i]-j for j in 1:i-1]
+          end
+      end
+      return config
+    end
     
 #=
 elseif s=="J1-J2"
