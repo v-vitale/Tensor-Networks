@@ -57,3 +57,16 @@ function contract_from_right(E_R::Array,Y::Array,W::Array)
     @tensor temp[:] := temp_2[ -1, 1, -3, 2, 6] * W[ -2 6 1 2 ]  
     return temp
 end
+
+
+function average(psi::MPS,W::MPO)
+    sW=size(W.data[1])
+    L = ones(1,sW[1],1)#ones(sW[1],1,1)
+    
+    right_normalize!(psi)
+    
+    for i in 1:psi.N
+         @tensor L[:] := L[1,2,3]*psi.data[i][1,4,-1]*W.data[i][2,-2,4,5]*conj(psi.data[i][3,5,-3]) 
+    end
+    return L[1,1,1]
+end
