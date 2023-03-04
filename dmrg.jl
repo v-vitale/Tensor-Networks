@@ -101,7 +101,8 @@ function two_sites_dmrg!(psi::MPS,
                         W::MPO,
                         sweeps::Int;
                         chimax=2048,
-                        tol=1e-15)
+                        tol=1e-15,
+                        verbose=false)
 
     right_normalize!(psi)
 
@@ -112,7 +113,9 @@ function two_sites_dmrg!(psi::MPS,
     #global psi,L,R
     Energy=0
     for sweep in 1:Int(sweeps)
-        println("Sweep: ",sweep)
+        if verbose==true
+          println("Sweep: ",sweep)
+        end
         #println(dims(psi))
         for i in 1:psi.N-1
             Energy,psi.data[i],psi.data[i+1] = two_sites_swipe_right( psi.data[i],
@@ -137,7 +140,9 @@ function two_sites_dmrg!(psi::MPS,
                                                                         tol)
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
-        println("Done! Energy= ",real(Energy),"; Variance: ",real(average(ψ,M*M)-average(ψ,M)^2))    
+        if verbose==true
+          println("Done! Energy= ",real(Energy),"; Variance: ",real(average(ψ,M*M)-average(ψ,M)^2))    
+        end
     end
 end
 
