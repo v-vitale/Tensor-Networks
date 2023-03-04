@@ -141,7 +141,7 @@ function two_sites_dmrg!(psi::MPS,
             R[i-1] = contract_from_right(R[i], psi.data[i], W.data[i])
         end
         if verbose==true
-          println("Done! Energy= ",real(Energy),"; Variance: ",real(average(ψ,M*M)-average(ψ,M)^2))    
+          println("Done! Energy= ",real(Energy),"; Variance: ",real(average(ψ,W*W)-average(ψ,W)^2))    
         end
     end
 end
