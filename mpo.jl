@@ -1157,6 +1157,48 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
     end
 end
 
+    
+ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
+    if s=="XY_longrange"
+        N=cols*rows # system size
+        sites = ITsiteinds("S=1/2",N)
+        ampo = ITOpSum()
+
+        for site1 in 1:N-1
+            idx=findall(z->z==site1,config)[1]
+            i1 = idx[1]; j1 = idx[2]
+
+            for site2 in site1+1:N
+                idx=findall(z->z==site2,config)[1]
+                i2 = idx[1]; j2 = idx[2]
+                r=sqrt((i1-i2)^2+(j1-j2)^2)
+                if r < cutoff
+                    ampo += (-J1/r^3,"X",site1,"X",site2)
+                    ampo += (-J1/r^3,"Y",site1,"Y",site2)
+                end
+            end
+        end
+        for site1 in 1:N-1
+            ampo += (J2,"Z",site1)
+        end
+        H=ITMPO(ampo,sites)
+
+        W.N=N
+        W1=Array(H[1],ITinds(H[1])...)
+        s1=size(W1)
+        W.data[1]=Base.copy(reshape(W1,(1,s1...)))
+        for i in 2:N-1
+            W.data[i]=Base.copy(Array(H[i],ITinds(H[i])...))
+        end
+        W2=Array(H[N],ITinds(H[N])...)
+        s2=size(W2)
+        W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+    else
+        @warn "Wrong parameters"
+    end
+end
+        
+        
 function draw(s::String,M::MPO,J1::Float64,J2::Float64,site::Int)
     if s=="J1-J2"
         for i in 1:dims(M)[site][1]
