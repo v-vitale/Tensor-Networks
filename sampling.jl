@@ -73,7 +73,7 @@ function sample_configs(ψ,Nr)
     ψ0=copy(ψ)
     right_normalize!(ψ0)
     P=MPO()
-    configs=zeros(ψ.N+1,Nr)
+    configs=zeros(ψ.N,Nr)
     for rep in 1:Nr
         ψ=copy(ψ0)
         config=[]
