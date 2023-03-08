@@ -98,7 +98,6 @@ function sample_configs(ψ,Nr)
                 @tensor ψ.data[site+1][:] := S[-1,1 ] * V[ 1,2 ] * ψ.data[site+1][2,-2,-3] 
             end
         end
-        configs[:,rep]=vcat(config,[rand()])
     end
     return configs
 end
