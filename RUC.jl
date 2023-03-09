@@ -21,3 +21,5 @@ function RUC_layer(s::String,N::Int)
         return [reshape(CUE(4),(2,2,2,2)) for i in 1:Int(N/2)]
   end
 end 
+
+      
