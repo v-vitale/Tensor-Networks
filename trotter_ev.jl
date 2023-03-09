@@ -27,18 +27,18 @@ function trotter_ev!(psi::MPS,
         end
         for i in 1:psi.N-1
             psi.data[i],psi.data[i+1] = trotter_swipe_right(psi.data[i],
-                                                              psi.data[i+1],
-                                                              gates[i],  
-                                                              chimax,
-                                                              tol
+                                                            psi.data[i+1],
+                                                            gates[i],  
+                                                            chimax,
+                                                            tol)
         end
 
         for i in psi.N:-1:2
             psi.data[i-1],psi.data[i] = trotter_swipe_left(psi.data[i-1],
-                                                              psi.data[i], 
-                                                              gates[i-1], 
-                                                              chimax,
-                                                              tol)
+                                                           psi.data[i], 
+                                                           gates[i-1], 
+                                                           chimax,
+                                                           tol)
         enD
     end
 end
@@ -49,8 +49,6 @@ function trotter_swipe_right(AL::Array, AR::Array, M::Array, chimax::Int, tol::F
     sAL = size(AL)
     sAR = size(AR)
     @tensor A[:] := AL[-1,-2,1]*AR[1,-3,-4]
-    
-    @tensor M[:] := WL[-1,1,-3,-5]*WR[1,-2,-4,-6]
     @tensor theta[:]:= A[-1,1,2,-4]*M[1,2,-2,-3]
 
     theta=reshape(theta,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
@@ -87,15 +85,13 @@ function trotter_swipe_right(AL::Array, AR::Array, M::Array, chimax::Int, tol::F
     return AL, AR
 end
 
-function trotter_swipe_left(AL::Array, AR::Array, WL::Array, WR::Array, E::Array, F::Array , chimax::Int,tol::Float64)
+function trotter_swipe_left(AL::Array, AR::Array, M::Array, chimax::Int,tol::Float64)
     #tol=1e-15
 
     sAL = size(AL)
     sAR = size(AR)
 
     @tensor A[:] := AL[-1,-2,1]*AR[1,-3,-4]
-    
-    @tensor M[:] := WL[-1,1,-3,-5]*WR[1,-2,-4,-6]
     @tensor theta[:]:= A[-1,1,2,-4]*M[1,2,-2,-3]
 
     theta=reshape(theta,(sAL[1]*sAL[2],sAR[2]*sAR[3]))
