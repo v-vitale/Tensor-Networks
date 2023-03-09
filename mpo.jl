@@ -1206,7 +1206,10 @@ end
                 idx=findall(z->z==site2,config)[1]
                 i2 = idx[1]; j2 = idx[2]
                 r=sqrt((i1-i2)^2+(j1-j2)^2)
-                if r < cutoff
+                if cutoff==false 
+                    ampo += (-J1/r^3,"X",site1,"X",site2)
+                    ampo += (-J1/r^3,"Y",site1,"Y",site2)
+                elseif r < cutoff
                     ampo += (-J1/r^3,"X",site1,"X",site2)
                     ampo += (-J1/r^3,"Y",site1,"Y",site2)
                 end
