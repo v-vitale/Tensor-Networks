@@ -2,7 +2,7 @@ include("mps.jl")
 include("mpo.jl")
 
 function RUC_layer(s::String,W::MPO,N::Int)  
-  if mod(N,2) \= 0
+  if mod(N,2) != 0
     @warn "Odd number of sites"
   end
   dist = Haar(4)
