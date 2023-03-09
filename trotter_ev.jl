@@ -39,7 +39,7 @@ function trotter_ev!(psi::MPS,
                                                            gates[i-1], 
                                                            chimax,
                                                            tol)
-        enD
+        end
     end
 end
 
