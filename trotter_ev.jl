@@ -10,7 +10,7 @@ using KrylovKit
 using LinearAlgebra
 
 
-function trotter_ev!(psi::MPS,
+function trotter_evolution!(psi::MPS,
                      gates::Array,
                      sweeps::Int;
                      chimax=2048,
