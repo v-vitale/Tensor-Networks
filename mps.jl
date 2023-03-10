@@ -2,6 +2,7 @@
 #   Feb 2022
 
 include("abstractTN.jl")
+include("contractions.jl")
 
 
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
@@ -19,16 +20,6 @@ end
 
 MPS() = MPS(Dict(), 0)
 
-function MPS_dot(A::MPS,B::MPS)
-    E=ones(1,1)
-    for i in 1:A.N
-        @tensor temp[:] := E[-1,1]*A.data[i][1,-2,-3] 
-        @tensor E[:] := temp[1,2,-2] * conj( B.data[i][1,2,-1] )
-    end
-    return E[1]
-end
-
-Base.:*(A::MPS,B::MPS)=MPS_dot(A,B)
 
 function Normalize!(A::MPS)
     norm = MPS_dot(A,A)

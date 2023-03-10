@@ -70,3 +70,83 @@ function average(psi::MPS,W::MPO)
     end
     return L[1,1,1]
 end
+
+
+
+function MPS_dot(A::MPS,B::MPS)
+    E=ones(1,1)
+    for i in 1:A.N
+        @tensor temp[:] := E[-1,1]*A.data[i][1,-2,-3] 
+        @tensor E[:] := temp[1,2,-2] * conj( B.data[i][1,2,-1] )
+    end
+    return E[1]
+end
+
+Base.:*(A::MPS,B::MPS)=MPS_dot(A,B)
+
+
+function MPO_dot(W::MPO,Q::MPO)
+    if isempty(W.data) || isempty(Q.data)
+        @warn "Empty MPO."
+        return 0
+    end
+    temp=MPO()
+    temp.N=W.N
+    for i in 1:W.N
+        sW=size(W.data[i])
+        sQ=size(Q.data[i])
+        @tensor temp.data[i][:] := W.data[i][-1,-3,-5,1]*Q.data[i][-2,-4,1,-6]
+        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[2]*sQ[2],sW[3],sQ[4])
+    end
+    return temp
+end
+
+Base.:*(W::MPO,Q::MPO)=MPO_dot(W,Q)
+
+
+
+function MPO_MPS_dot(W::MPO,Q::MPS)
+    if isempty(W.data)
+        @warn "Empty MPO."
+        #return 0
+    end
+    if  isempty(Q.data)
+        @warn "Empty MPS."
+        #return 0
+    end
+    
+    temp=MPS()
+    temp.N=W.N
+    for i in 1:W.N
+        sW=size(W.data[i])
+        sQ=size(Q.data[i])
+        @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,1,-5]
+        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
+    end
+    return temp
+end
+
+function MPS_MPO_dot(Q::MPS,W::MPO)
+    if isempty(W.data)
+        @warn "Empty MPO."
+        #return 0
+    end
+    if  isempty(Q.data)
+        @warn "Empty MPS."
+        #return 0
+    end
+    
+    temp=MPS()
+    temp.N=W.N
+    for i in 1:W.N
+        sW=size(W.data[i])
+        sQ=size(Q.data[i])
+        @tensor temp.data[i][:] := W.data[i][-1,-4,1,-3]*Q.data[i][-2,1,-5]
+        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
+    end
+    return temp
+end
+
+
+Base.:*(W::MPO,A::MPS)=MPO_MPS_dot(W,A)
+Base.:*(A::MPS,W::MPO)=MPS_MPO_dot(A,W)

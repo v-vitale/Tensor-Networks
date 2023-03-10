@@ -2,6 +2,7 @@
 #   Feb 2022
 
 include("mps.jl")
+include("contractions.jl")
 using LsqFit
 using ITensors: AutoMPO as ITAutoMPO
 using ITensors: MPO as ITMPO
@@ -26,24 +27,6 @@ end
 
 MPO() = MPO(Dict(), 0)
 
-function MPO_dot(W::MPO,Q::MPO)
-    if isempty(W.data) || isempty(Q.data)
-        @warn "Empty MPO."
-        return 0
-    end
-    temp=MPO()
-    temp.N=W.N
-    for i in 1:W.N
-        sW=size(W.data[i])
-        sQ=size(Q.data[i])
-        @tensor temp.data[i][:] := W.data[i][-1,-3,-5,1]*Q.data[i][-2,-4,1,-6]
-        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[2]*sQ[2],sW[3],sQ[4])
-    end
-    return temp
-end
-
-Base.:*(W::MPO,Q::MPO)=MPO_dot(W,Q)
-
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
 
@@ -66,52 +49,6 @@ function sum_MPO(W::MPO,Q::MPO)
 end
 
 Base.:+(A::MPO, B::MPO)=sum_MPO(A,B)
-
-function MPO_MPS_dot(W::MPO,Q::MPS)
-    if isempty(W.data)
-        @warn "Empty MPO."
-        #return 0
-    end
-    if  isempty(Q.data)
-        @warn "Empty MPS."
-        #return 0
-    end
-    
-    temp=MPS()
-    temp.N=W.N
-    for i in 1:W.N
-        sW=size(W.data[i])
-        sQ=size(Q.data[i])
-        @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,1,-5]
-        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
-    end
-    return temp
-end
-
-function MPS_MPO_dot(Q::MPS,W::MPO)
-    if isempty(W.data)
-        @warn "Empty MPO."
-        #return 0
-    end
-    if  isempty(Q.data)
-        @warn "Empty MPS."
-        #return 0
-    end
-    
-    temp=MPS()
-    temp.N=W.N
-    for i in 1:W.N
-        sW=size(W.data[i])
-        sQ=size(Q.data[i])
-        @tensor temp.data[i][:] := W.data[i][-1,-4,1,-3]*Q.data[i][-2,1,-5]
-        temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
-    end
-    return temp
-end
-
-
-Base.:*(W::MPO,A::MPS)=MPO_MPS_dot(W,A)
-Base.:*(A::MPS,W::MPO)=MPS_MPO_dot(A,W)
 
 function trace_MPO(A::MPO)
     if isempty(A.data)

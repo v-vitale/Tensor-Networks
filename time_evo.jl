@@ -4,7 +4,6 @@
 
 include("mps.jl")
 include("mpo.jl")
-include("contractions.jl")
 using TensorOperations
 using KrylovKit
 using LinearAlgebra
