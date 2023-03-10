@@ -75,6 +75,33 @@ function truncate!(A::MPS)
     end   
 end
 
+function Initialize!(s::String,A::MPS,config::Array,N::Int)
+    if length(config)!=N
+        @warn "sizes not matching"
+    end
+    
+    if s=="product_state"
+        chi=1
+        d=2
+        temp=Dict()
+        for (s_,spin) in enumerate(config)
+            temp[s_]= im*zeros(chi,d,chi)
+            if spin=="up" || spin==0
+                temp[s_][1,:,1]=[1;0]
+            elseif spin=="down" || spin==1
+                temp[s_][1,:,1]=[0;1]
+            end
+        end
+        A.N=N
+        for (s_,spin) in enumerate(config)
+            A.data[s_]=temp[s_]
+        end
+        right_normalize!(A)
+        return "Product state: "*string(config)
+    end
+end
+    
+        
 function Initialize!(s::String,A::MPS,N::Int)
     if s=="GHZ"
         chi=2
