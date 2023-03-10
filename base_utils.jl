@@ -1,6 +1,8 @@
 #   Author: V. Vitale
 #   Feb 2022
 #   Conctraction utilities
+include("mps.jl")
+include("mpo.jl")
 
 ## initial E and F matrices for the left and right vacuum states
 function initial_L(W::Array)
@@ -71,6 +73,14 @@ function average(psi::MPS,W::MPO)
     return L[1,1,1]
 end
 
+
+
+function Normalize!(A::MPS)
+    norm = MPS_dot(A,A)
+    for i in 1:A.N
+        A.data[i] = A.data[i]/norm^(1/(2*A.N))
+    end
+end
 
 
 function MPS_dot(A::MPS,B::MPS)

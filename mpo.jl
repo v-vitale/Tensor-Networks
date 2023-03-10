@@ -2,7 +2,7 @@
 #   Feb 2022
 
 include("mps.jl")
-include("contractions.jl")
+
 using LsqFit
 using ITensors: AutoMPO as ITAutoMPO
 using ITensors: MPO as ITMPO
@@ -26,6 +26,8 @@ mutable struct MPO <: AbstractTN
 end
 
 MPO() = MPO(Dict(), 0)
+
+
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++

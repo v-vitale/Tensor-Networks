@@ -19,23 +19,6 @@ end
 
 MPS() = MPS(Dict(), 0)
 
-function MPS_dot(A::MPS,B::MPS)
-    E=ones(1,1)
-    for i in 1:A.N
-        @tensor temp[:] := E[-1,1]*A.data[i][1,-2,-3] 
-        @tensor E[:] := temp[1,2,-2] * conj( B.data[i][1,2,-1] )
-    end
-    return E[1]
-end
-
-Base.:*(A::MPS,B::MPS)=MPS_dot(A,B)
-
-function Normalize!(A::MPS)
-    norm = MPS_dot(A,A)
-    for i in 1:A.N
-        A.data[i] = A.data[i]/norm^(1/(2*A.N))
-    end
-end
 
 function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     temp=Dict()
@@ -75,6 +58,29 @@ function truncate!(A::MPS)
     end   
 end
 
+function Initialize!(s::String,A::MPS,config::Array)    
+    if s=="product_state"
+        chi=1
+        d=2
+        temp=Dict()
+        for (s_,spin) in enumerate(config)
+            temp[s_]= im*zeros(chi,d,chi)
+            if spin=="up" || spin==0
+                temp[s_][1,:,1]=[1;0]
+            elseif spin=="down" || spin==1
+                temp[s_][1,:,1]=[0;1]
+            end
+        end
+        A.N=N
+        for (s_,spin) in enumerate(config)
+            A.data[s_]=temp[s_]
+        end
+        right_normalize!(A)
+        return "Product state: "*string(config)
+    end
+end
+    
+        
 function Initialize!(s::String,A::MPS,N::Int)
     if s=="GHZ"
         chi=2
