@@ -10,7 +10,7 @@ function RUC_layer(N::Int)
       U = ph.*q
       return U
   end
-  return [reshape(CUE(4),(2,2,2,2)) for i in 1:Int(N/2)]
+  return [reshape(CUE(4),(2,2,2,2)) for i in 1:N-1]
 end 
 
       
