@@ -2,7 +2,6 @@
 #   Feb 2022
 
 include("abstractTN.jl")
-include("contractions.jl")
 
 
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
@@ -20,13 +19,6 @@ end
 
 MPS() = MPS(Dict(), 0)
 
-
-function Normalize!(A::MPS)
-    norm = MPS_dot(A,A)
-    for i in 1:A.N
-        A.data[i] = A.data[i]/norm^(1/(2*A.N))
-    end
-end
 
 function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     temp=Dict()
