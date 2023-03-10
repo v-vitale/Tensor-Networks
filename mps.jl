@@ -75,11 +75,7 @@ function truncate!(A::MPS)
     end   
 end
 
-function Initialize!(s::String,A::MPS,config::Array,N::Int)
-    if length(config)!=N
-        @warn "sizes not matching"
-    end
-    
+function Initialize!(s::String,A::MPS,config::Array)    
     if s=="product_state"
         chi=1
         d=2
