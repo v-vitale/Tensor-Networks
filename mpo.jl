@@ -32,7 +32,7 @@ MPO(s::String,J::Float64,h::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float
 MPO(s::String,config::Array,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),config::Array,subsystem::Array,N::Int)
 MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
-
+MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
@@ -863,7 +863,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,k::I
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Long Range MPO"  
+        return W 
     else
         @warn "Wrong parameters"
     end
@@ -932,7 +932,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,J::Float64,hz::Float64,γp:
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Open Long Range MPO"  
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -988,7 +988,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Brydges MPO"  
+        return W
     elseif s=="Open"
         k=3
         chi=4*k+2
@@ -1044,7 +1044,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Open Brydges MPO"  
+        return W
     elseif s=="Trajectories"
         d=2
         k=3
@@ -1083,7 +1083,7 @@ function Initialize_Brydges!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Brydges MPO"    
+        return W   
     else
         @warn "Wrong parameters"
     end
@@ -1155,6 +1155,7 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
         W2=Array(H[N],ITinds(H[N])...)
         s2=size(W2)
         W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+        return W
     elseif s=="XY_longrange"
         N=cols*rows # system size
         sites = ITsiteinds("S=1/2",N)
@@ -1188,6 +1189,7 @@ function Initialize!(s::String,W::MPO,J1::Float64,J2::Float64,cols::Int,rows::In
         W2=Array(H[N],ITinds(H[N])...)
         s2=size(W2)
         W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -1232,6 +1234,7 @@ end
         W2=Array(H[N],ITinds(H[N])...)
         s2=size(W2)
         W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+        return W
     else
         @warn "Wrong parameters"
     end
