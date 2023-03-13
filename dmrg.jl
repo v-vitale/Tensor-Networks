@@ -102,7 +102,8 @@ function two_sites_dmrg!(psi::MPS,
                         tol=1e-15,
                         verbose=false)
 
-    right_normalize!(psi)
+    move_orthogonalization_center!(psi,1)
+    #right_normalize!(psi)
 
     d = dims(psi)[2][2]
     L = construct_L(psi, W)
