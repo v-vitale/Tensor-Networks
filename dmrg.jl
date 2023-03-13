@@ -102,7 +102,7 @@ function two_sites_dmrg!(psi::MPS,
                         tol=1e-15,
                         verbose=false)
 
-    move_orthogonalization_center!(psi,1)
+    move_orthogonality_center!(psi,1)
     #right_normalize!(psi)
 
     d = dims(psi)[2][2]
