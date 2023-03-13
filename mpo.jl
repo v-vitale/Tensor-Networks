@@ -504,7 +504,7 @@ end
 
 
 function Initialize!(s::String,W::MPO,N::Int)
-    if s=="Magnetization"
+    if s=="Sz tot"
         chi=2
         d=2
 
@@ -524,6 +524,62 @@ function Initialize!(s::String,W::MPO,N::Int)
         Wt[2,2,:,:]= Id2
         Wt2[1,1,:,:] = Id2
         Wt2[2,1,:,:] = σz 
+
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W    
+    elseif s=="Sx tot"
+        chi=2
+        d=2
+
+        σx = [0 1; 1 0]
+        Id2= [1 0; 0 1]
+        O2 = [0 0; 0 0]
+
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        Wt1[1,1,:,:] = σx 
+        Wt1[1,2,:,:] = Id2
+        Wt[1,1,:,:]= Id2
+        Wt[1,2,:,:]= O2
+        Wt[2,1,:,:]= σx
+        Wt[2,2,:,:]= Id2
+        Wt2[1,1,:,:] = Id2
+        Wt2[2,1,:,:] = σx 
+
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W    
+   elseif s=="Sy tot"
+        chi=2
+        d=2
+
+        σy = [0 -im; im 0]
+        Id2= [1 0; 0 1]
+        O2 = [0 0; 0 0]
+
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+
+        Wt1[1,1,:,:] = σy
+        Wt1[1,2,:,:] = Id2
+        Wt[1,1,:,:]= Id2
+        Wt[1,2,:,:]= O2
+        Wt[2,1,:,:]= σy
+        Wt[2,2,:,:]= Id2
+        Wt2[1,1,:,:] = Id2
+        Wt2[2,1,:,:] = σy 
 
         W.N=N
         W.data[1] = Base.copy(Wt1)
@@ -1161,8 +1217,8 @@ end
                 end
             end
         end
-        for site1 in 1:N-1
-            ampo += (J2,"Z",site1)
+        for site1 in 1:N
+            ampo += (J2*(-1)^(site1+1),"Z",site1)
         end
         H=ITMPO(ampo,sites)
 
