@@ -15,10 +15,13 @@ include("abstractTN.jl")
 mutable struct MPS <: AbstractTN
   data::Dict
   N::Int
+  b::Int
 end
 
-MPS() = MPS(Dict(), 0)
-
+MPS() = MPS(Dict(), 0, 0)
+MPS(d,chi,N)=Initialize!(MPS(),d::Int,chi::Int,N::Int)
+MPS(s::String,config::Array)=Initialize!(s::String,MPS(),config::Array)    
+MPS(s::String,N::Int)=Initialize!(s::String,MPS(),N::Int)
 
 function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     temp=Dict()
@@ -29,6 +32,8 @@ function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     temp[N] = im*rand(chi,d,1)
     A.N=N
     A.data=temp
+    right_normalize!(A)
+    return A
 end
 
 function truncate!(A::MPS)
@@ -55,7 +60,8 @@ function truncate!(A::MPS)
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
         S=diagm(S)
         @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
-    end   
+    end  
+    A.b=1 
 end
 
 function Initialize!(s::String,A::MPS,config::Array)    
@@ -76,7 +82,7 @@ function Initialize!(s::String,A::MPS,config::Array)
             A.data[s_]=temp[s_]
         end
         right_normalize!(A)
-        return "Product state: "*string(config)
+        return A
     end
 end
     
@@ -103,6 +109,8 @@ function Initialize!(s::String,A::MPS,N::Int)
         end
         A.data[N]=temp2
         right_normalize!(A)
+        A.b=1
+        return A
     elseif s=="Brydges_Closed"
         chi=1
         d=2
@@ -121,6 +129,7 @@ function Initialize!(s::String,A::MPS,N::Int)
         temp[N][1,:,1] = [1 ; 0]
         A.N=N
         A.data=temp
+        return A
     elseif s=="Brydges_Open"
         chi=1
         d=4
@@ -140,6 +149,7 @@ function Initialize!(s::String,A::MPS,N::Int)
         temp[N][1,:,1] = reshape([ 1 0 ; 0 0],d)
         A.N=N
         A.data=temp
+        return A
     end
 end
 
@@ -157,6 +167,7 @@ function right_normalize!(A::MPS)
             @tensor A.data[i-1][:] := A.data[i-1][-1,-2,2] * U[ 2,3 ] * S[ 3,-3 ]  
         end
     end  
+    A.b=1
 end
    
 function right_orthogonalize!(A::MPS)
@@ -172,6 +183,7 @@ function right_orthogonalize!(A::MPS)
             @tensor A.data[i-1][:] := A.data[i-1][-1,-2,2] * U[ 2,3 ] * S[ 3,-3 ]  
         end
     end  
+    A.b=1
 end
 
 function left_normalize!(A::MPS)
@@ -188,6 +200,7 @@ function left_normalize!(A::MPS)
             @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
         end
     end    
+    A.b=A.N
 end
 
 function left_orthogonalize!(A::MPS)
@@ -202,11 +215,13 @@ function left_orthogonalize!(A::MPS)
             S=diagm(S)
             @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
         end
-    end    
+    end   
+    A.b=A.N 
 end
 
 function move_orthogonality_center!(A::MPS,b::Int)
     right_orthogonalize!(A)
+    
     for i in 1:b-1
         sA = size(A.data[i])
         
@@ -220,11 +235,46 @@ function move_orthogonality_center!(A::MPS,b::Int)
             @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
         end
     end    
+    A.b=b
 end
 
-    
+function move_orthogonality_center!(A::MPS,b::Int)
+    if A.b<b    
+	    for i in A.b:b-1
+		sA = size(A.data[i])
+		
+		U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+
+		#S /= norm(S)
+		V=V'  
+		A.data[i] = reshape( U,( sA[1], sA[2], :)) 
+		if i<A.N
+		    S=diagm(S)
+		    @tensor A.data[i+1][:] := S[-1,1 ] * V[ 1,2 ] * A.data[i+1][2,-2,-3] 
+		end
+	    end    
+	    A.b=b
+    elseif A.b>b
+	   for i in A.b:-1:b+1
+		sA = size(A.data[i])
+
+		U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
+
+		V=V'
+		A.data[i] = reshape(V,(:, sA[2], sA[3]))
+		if i>1
+		    S=diagm(S)
+		    @tensor A.data[i-1][:] := A.data[i-1][-1,-2,2] * U[ 2,3 ] * S[ 3,-3 ]  
+		end
+	    end
+	    A.b=b
+    end
+    	
+end
+ 
 function calc_entropy(A::MPS)
     M=copy(A)
+    move_orthogonality_center!(M,1)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
@@ -237,7 +287,8 @@ function calc_entropy(A::MPS)
         if i<M.N
             @tensor M.data[i+1][:] := diagm(S)[-1,1 ] * V[ 1,2 ] * M.data[i+1][2,-2,-3] 
         end
-        Sent[i] = sum(-dot(S.^2,log.(S.^2)))
+        S2=S.^2
+ 	Sent[i] = -dot(S2[S2.>1e-15],log.(S2[S2.>1e-15]))
     end 
 
     
@@ -246,6 +297,8 @@ end
 
 function calc_Renyi2(A::MPS)
     M=copy(A)
+    
+    move_orthogonality_center!(M,1)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
@@ -267,6 +320,7 @@ end
 
 function calc_purity(A::MPS)
     M=copy(A)
+    move_orthogonality_center!(M,1)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
@@ -287,6 +341,7 @@ end
 
 function calc_trace(A::MPS)
     M=copy(A)
+    move_orthogonality_center!(M,1)
     Sent = zeros(M.N)
     for i in 1:M.N
         sM = size(M.data[i])
@@ -318,7 +373,7 @@ end
 
 
 function rdm_rho(A::MPS,r::Array)
-    #move_orthogonality_center!(A,1)
+    move_orthogonality_center!(A,1)
     sA=size(A.data[r[1]]) 
     rd_rho=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
     for j in r[2:end]

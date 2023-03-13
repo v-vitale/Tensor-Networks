@@ -26,6 +26,12 @@ mutable struct MPO <: AbstractTN
 end
 
 MPO() = MPO(Dict(), 0)
+MPO(s::String,J::Float64,Jz::Float64,hz2::Float64,hz::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,Jz::Float64,hz2::Float64,hz::Float64,N::Int)
+MPO(s::String,J::Float64,h::Float64,hz::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,h::Float64,hz::Float64,N::Int)
+MPO(s::String,J::Float64,h::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,h::Float64,N::Int)
+MPO(s::String,config::Array,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),config::Array,subsystem::Array,N::Int)
+MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
+MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 
 
 
@@ -117,7 +123,7 @@ function Initialize!(s::String,W::MPO,J::Float64,Jz::Float64,hz2::Float64,hz::Fl
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "Kennedy-Tasaki S=1 MPO"
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -163,7 +169,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,hz::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "Cluster Ising MPO"
+        return W
     elseif s=="XXZ"
         d=2
         D=5
@@ -203,7 +209,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,hz::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "XXZ MPO"
+        return W
     elseif s=="XXZ S=1"
         d=3
         D=5
@@ -243,7 +249,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,hz::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "XXZ S=1 MPO"
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -284,7 +290,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "TFIM MPO"
+        return W
     elseif s=="Ising XX"
         d=2
         D=3
@@ -318,7 +324,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "TFIM XX MPO"
+        return W
     elseif s=="Cluster_Ising"
         d=2
         D=5
@@ -354,7 +360,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "Cluster Ising MPO"
+        return W
     elseif s=="XXZ"
         d=2
         D=5
@@ -392,7 +398,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "XXZ MPO"
+        return W
     elseif s=="XXZ S=1"
         d=3
         D=5
@@ -430,7 +436,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "XXZ S=1 MPO"
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -474,6 +480,7 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
             Wt[1,1,:,:] = op[config[i]+1]
             W.data[j]= Base.copy(Wt)
         end
+        return W
     elseif s=="proj S=1"
         op = [[1 0 0; 0 0 0; 0 0 0],[0 0 0;0 1 0; 0 0 0],[0 0 0; 0 0 0; 0 0 1]] 
         id = [1 0 0; 0 1 0; 0 0 1]
@@ -490,7 +497,7 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
             Wt[1,1,:,:] = op[2-config[i]]
             W.data[j]= Base.copy(Wt)
         end
-        
+        return W
     end
 end
 
@@ -524,7 +531,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Magnetization MPO"
+        return W
     elseif s=="Neel"
         h=100
         d=2
@@ -556,7 +563,7 @@ function Initialize!(s::String,W::MPO,N::Int)
         end
         W.data[N] = Base.copy(W2)
         W.N=N
-        return "Neel"
+        return W
     elseif s=="Local_Haar"
         function CUE(nh)
             U = (randn(nh,nh)+im*randn(nh,nh))/sqrt(2)
@@ -577,7 +584,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt)
-        return "Local Haar MPO"
+        return W
     elseif s=="Id"
         chi=1
         d=2
@@ -595,7 +602,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Identity"
+        return W
     elseif s=="Rx"
         chi=1
         d=2
@@ -613,7 +620,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Rx"
+        return W
     elseif s=="Ry"
         chi=1
         d=2
@@ -631,7 +638,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Ry"
+        return W
     elseif s=="Rx S=1"
         chi=1
         d=3
@@ -649,7 +656,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Rx S=1"
+        return W
     elseif s=="Ry S=1"
         chi=1
         d=3
@@ -667,7 +674,7 @@ function Initialize!(s::String,W::MPO,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Ry S=1"
+        return W
     else
         @warn "Wrong parameters"
     end
@@ -685,7 +692,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Null MPO"
+        return W
     elseif s=="Random"
         Wt = im *  rand(chi,chi,d,d)
         Wt1 = im *  rand(1,chi,d,d)
@@ -697,7 +704,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
             W.data[i] = Base.copy(Wt)
         end
         W.data[N] = Base.copy(Wt2)
-        return "Random MPO"
+        return W
     else
         @warn "Wrong parameters"
     end

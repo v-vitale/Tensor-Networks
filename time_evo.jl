@@ -41,6 +41,7 @@ function trotter_evolution!(psi::MPS,
                                                            tol)
         end
     end
+    right_normalize!(psi)
 end
 
 function trotter_swipe_right(AL::Array, AR::Array, M::Array, chimax::Int, tol::Float64)
@@ -56,7 +57,7 @@ function trotter_swipe_right(AL::Array, AR::Array, M::Array, chimax::Int, tol::F
     U,S,V = svd(theta,full=false,alg=LinearAlgebra.QRIteration())
         
     V=V'
-    S=S/norm(S)
+    #S=S/norm(S)
     indices = findall(1 .-cumsum(S.^2) .< tol)
     if length(indices)>0
         chi = indices[1]+1
@@ -75,7 +76,7 @@ function trotter_swipe_right(AL::Array, AR::Array, M::Array, chimax::Int, tol::F
     end
 
     
-    S /= norm(S)
+    #S /= norm(S)
 
     AL = reshape( U , ( sAL[1], sAL[2], :) )
     #"ij,jl,slk->sik"
@@ -118,7 +119,7 @@ function trotter_swipe_left(AL::Array, AR::Array, M::Array, chimax::Int,tol::Flo
         V =  V[1:chi,:]
     end
 
-    S /= norm(S)
+    #S /= norm(S)
 
     AR = reshape(V,(:,sAR[2],sAR[3]))
 

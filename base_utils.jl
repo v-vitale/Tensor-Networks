@@ -133,6 +133,7 @@ function MPO_MPS_dot(W::MPO,Q::MPS)
         @tensor temp.data[i][:] := W.data[i][-1,-4,-3,1]*Q.data[i][-2,1,-5]
         temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
     end
+    temp.b=Q.b
     return temp
 end
 
@@ -154,6 +155,7 @@ function MPS_MPO_dot(Q::MPS,W::MPO)
         @tensor temp.data[i][:] := W.data[i][-1,-4,1,-3]*Q.data[i][-2,1,-5]
         temp.data[i]=reshape(temp.data[i],sW[1]*sQ[1],sW[3],sW[2]*sQ[3])
     end
+    temp.b=Q.b
     return temp
 end
 

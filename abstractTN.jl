@@ -37,6 +37,7 @@ function copy(A::AbstractTN)
     N=length(A)
     if typeof(A)==MPS
         temp=MPS()
+        temp.b=A.b
     elseif typeof(A)==MPO
         temp=MPO()
     end
@@ -44,6 +45,7 @@ function copy(A::AbstractTN)
     for i in 1:N
         temp.data[i]=Base.copy(A.data[i])
     end
+
     return temp
 end
 
