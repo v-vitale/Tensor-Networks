@@ -33,6 +33,7 @@ Tutorial:
     - bond dimension D, 
     - local dimension d,
     - length L.
+  - Equivalently one can call MPS(*args)
 
 # mpo.jl contains several MPOs and routines to handle them
 - Transverse Field Ising Chain
@@ -49,6 +50,7 @@ Tutorial:
   - Ex: Initialize!("XXZ S=1",W,J,h,L); inizializes an MPO with for the XXZ chain of length L with spin S=1:
     - J and h are two parameters in the MPO,
     - bond dimension and local dimension are automatically handled.
+  - Equivalently one can call MPO(s::String,*args)
 
 # dmrg.jl contains algorithm for the diagonalization of mpos
 - one site dmrg
@@ -56,15 +58,20 @@ Tutorial:
 - contraction routines needed
 
 Tutorial:
-- two_sites_dmrg!(A,W,sweeps,chimax) calls the two-sites dmrg routine
+- two_sites_dmrg!(A,W,sweeps;chimax=2048,tol=1e-15) calls the two-sites dmrg routine
   - A is an initial mps that can be just called as A=MPS(),
   - W is the MPO one wants to diagonalize,
   - sweeps set the number of sweeps (back and forth) along the mps in the optimization,
   - chimax set the maximum bond dimension if needed, default is chimax=128.
 
 
-# tdvp.jl contains all the necessary for doing a time-dependent variational principle algorithm
+# time_evo.jl contains all the necessary for doing a time-dependent variational principle algorithm or a trotterized evolution
 - tdvp routines and contractions
+- trotterized evolution given two qubits gates
+
+# RUC.jl contains all the necessary for simulation of Random Unitary Circuits with local measurements
+- evolution with two qubits random unitaries 
+- measurement depending on the local magnetization
 
 # traj_utils.jl contains all the necessary for doing open dynamics with trajectories
 - routines for handling the evolution together with the tdvp in tdvp.jl
