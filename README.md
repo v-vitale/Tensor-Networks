@@ -1,5 +1,5 @@
-# Tensor-Networks .. image:: https://zenodo.org/badge/461973238.svg
-   :target: https://zenodo.org/badge/latestdoi/461973238
+# Tensor-Networks <a href="https://zenodo.org/badge/latestdoi/461973238"><img src="https://zenodo.org/badge/461973238.svg" alt="DOI"></a>
+
 Collection of codes with Tensors Networks. (work in progress)
 
 Author: Vittorio Vitale 
