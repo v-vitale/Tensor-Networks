@@ -7,7 +7,6 @@ include("abstractTN.jl")
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
 #    s
 #    |
-# i -A- j
 #
 # [s] acts on the local Hilbert space
 # [i,j] act on the virtual bonds
