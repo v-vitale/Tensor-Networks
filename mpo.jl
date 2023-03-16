@@ -1224,23 +1224,29 @@ end
         end
         H=ITMPO(ampo,sites)
 
-        W.N=N
-        W1=Array(H[1],ITinds(H[1])...)
-        s1=size(W1)
-        W.data[1]=Base.copy(reshape(W1,(1,s1...)))
-        for i in 2:N-1
-            W.data[i]=Base.copy(Array(H[i],ITinds(H[i])...))
-        end
-        W2=Array(H[N],ITinds(H[N])...)
-        s2=size(W2)
-        W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+        W=MPO_from_ITensors(H)
         return W
     else
         @warn "Wrong parameters"
     end
 end
         
-        
+function MPO_from_ITensors(H::ITensors.MPO)
+    W.N=N
+    W1=Array(H[1],ITinds(H[1])...)
+    s1=size(W1)
+    W.data[1]=Base.copy(reshape(W1,(1,s1...)))
+    for i in 2:N-1
+        W.data[i]=Base.copy(Array(H[i],ITinds(H[i])...))
+    end
+    W2=Array(H[N],ITinds(H[N])...)
+    s2=size(W2)
+    W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
+    return W
+end        
+
+
+
 function draw(s::String,M::MPO,J1::Float64,J2::Float64,site::Int)
     if s=="J1-J2"
         for i in 1:dims(M)[site][1]

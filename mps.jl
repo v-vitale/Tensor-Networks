@@ -5,7 +5,7 @@ include("abstractTN.jl")
 using ITensors: siteinds as ITsiteinds
 using ITensors: linkinds as ITlinkinds
 using ITensors: MPS as ITMPS
-using ITensors: orthogonalize as ITorthogonalize
+using ITensors: orthogonalize! as ITorthogonalize!
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
 #    s
 #    |
