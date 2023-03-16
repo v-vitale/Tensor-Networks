@@ -1255,9 +1255,10 @@ function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float
 		    ampo_LR .+=(J/4,"Z",l,"Z",k)
 		    ampo_LR .+=(J/4*(-1)^k,"Z",l)
 		    ampo_LR .+=(J/4*(-1)^l,"Z",k)
+		    ampo_LR .+=(J/4*(-1)^(l+k),"Id",k)
 		end
-		ampo_LR .+=(e0*J/2*(-1)^l,"Id",l)  
-		ampo_LR .+=(e0*J/2*(-1)^l,"Z",l)
+		ampo_LR .+=(e0*J*(-1)^l,"Id",l)  
+		ampo_LR .+=(e0*J,"Z",l)
 	    end
 	    ampo_LR .+=(J*e0^2,"Id",n)
 	end
