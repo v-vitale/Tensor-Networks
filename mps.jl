@@ -2,8 +2,10 @@
 #   Feb 2022
 
 include("abstractTN.jl")
-
-
+using ITensors: siteinds as ITsiteinds
+using ITensors: linkinds as ITlinkinds
+using ITensors: MPS as ITMPS
+using ITensors: orthogonalize as ITorthogonalize
 # MPS A-matrix is a 3-index tensor, A[i,s,j]
 #    s
 #    |
@@ -501,6 +503,26 @@ function rdm_from_dm(A::MPS,r::Array)
         return reshape(rd_rho,(2,2))
     end
     
+end
+
+
+function MPS_from_ITensors(ψ::ITMPS)
+    ITorthogonalize!(ψ,1)
+    linds=ITlinkinds(ψ)
+    sinds=ITsiteinds(ψ)
+    psi=MPS()
+    psi.b=1
+    psi.N=length(sinds)
+    psi1=Array(ψ[1],(sinds[1],linds[1]))
+    s1=size(psi1)
+    psi.data[1]=Base.copy(reshape(psi1,(1,s1...)))
+    for i in 2:L-1
+        psi.data[i]=Base.copy(Array(ψ[i],(linds[i-1],sinds[i],linds[i])))
+    end
+    psi2=Array(ψ[L],(linds[L-1],sinds[L]))
+    s2=size(psi1)
+    psi.data[L]=reshape(Base.copy(psi2),(s2...,1))
+    return psi
 end
 
 
