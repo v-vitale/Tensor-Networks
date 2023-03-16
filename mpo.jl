@@ -33,7 +33,7 @@ MPO(s::String,config::Array,subsystem::Array,N::Int)=Initialize!(s::String,MPO()
 MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
-
+MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -1230,19 +1230,64 @@ end
         @warn "Wrong parameters"
     end
 end
+
+
+function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
+    if s=="Schwinger"
+    	L=N
+        sites = ITsiteinds("S=1/2",L)
         
-function MPO_from_ITensors(H::ITensors.MPO)
-    W.N=N
-    W1=Array(H[1],ITinds(H[1])...)
-    s1=size(W1)
-    W.data[1]=Base.copy(reshape(W1,(1,s1...)))
-    for i in 2:N-1
-        W.data[i]=Base.copy(Array(H[i],ITinds(H[i])...))
+	ampo = ITOpSum()
+	for i in 1:L-1
+	    ampo .+=(w,"S+",i,"S-",i+1)
+	    ampo .+=(w,"S-",i,"S+",i+1)
+	end
+	for i in 1:L
+	    ampo .+=(m/2*((-1)^i),"Z",i)
+	end
+
+	MPO_NN=ITMPO(ampo,sites);
+
+	ampo_LR=ITOpSum()
+	for n in 1:L-1
+	    for l in 1:n
+		for k in 1:n
+		    ampo_LR .+=(J/4,"Z",l,"Z",k)
+		    ampo_LR .+=(J/4*(-1)^k,"Z",l)
+		    ampo_LR .+=(J/4*(-1)^l,"Z",k)
+		end
+		ampo_LR .+=(e0*J/2*(-1)^l,"Id",l)  
+		ampo_LR .+=(e0*J/2*(-1)^l,"Z",l)
+	    end
+	    ampo_LR .+=(J*e0^2,"Id",n)
+	end
+
+	MPO_LR=ITMPO(ampo_LR,sites);
+
+	H=MPO_NN+MPO_LR;
+        W=MPO_from_ITensors(H)
+        return W
+    else
+        @warn "Wrong parameters"
     end
-    W2=Array(H[N],ITinds(H[N])...)
-    s2=size(W2)
-    W.data[N]=Base.copy(reshape(W2,(s2[1],1,s2[2],s2[3])))
-    return W
+end
+
+        
+function MPO_from_ITensors(H::ITMPO)
+	linds=ITlinkinds(H)
+	sinds=ITsiteinds(H)
+	W=MPO()
+	W.N=N
+	W1=Array(H[1],(linds[1],sinds[1][1],sinds[1][2]))
+	s1=size(W1)
+	W.data[1]=Base.copy(reshape(W1,(1,s1...)))
+	for i in 2:N-1
+	    W.data[i]=Base.copy(Array(H[i],(linds[i-1],linds[i],sinds[i][1],sinds[i][2])))
+	end
+	W2=Array(H[N],(linds[N-1],sinds[N][1],sinds[N][2]))
+	s2=size(W2)
+	W.data[N]=permutedims(Base.copy(reshape(W2,(1,s2...))),(2,1,3,4))
+	return W
 end        
 
 
