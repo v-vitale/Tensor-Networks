@@ -1234,22 +1234,21 @@ end
 
 function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
     if s=="Schwinger"
-    	L=N
         sites = ITsiteinds("S=1/2",L)
         
 	ampo = ITOpSum()
-	for i in 1:L-1
+	for i in 1:N-1
 	    ampo .+=(w,"S+",i,"S-",i+1)
 	    ampo .+=(w,"S-",i,"S+",i+1)
 	end
-	for i in 1:L
+	for i in 1:N
 	    ampo .+=(m/2*((-1)^i),"Z",i)
 	end
 
 	MPO_NN=ITMPO(ampo,sites);
 
 	ampo_LR=ITOpSum()
-	for n in 1:L-1
+	for n in 1:N-1
 	    for l in 1:n
 		for k in 1:n
 		    ampo_LR .+=(J/4,"Z",l,"Z",k)
