@@ -1234,7 +1234,7 @@ end
 
 function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
     if s=="Schwinger"
-        sites = ITsiteinds("S=1/2",L)
+        sites = ITsiteinds("S=1/2",N)
         
 	ampo = ITOpSum()
 	for i in 1:N-1
@@ -1277,6 +1277,7 @@ function MPO_from_ITensors(H::ITMPO)
 	linds=ITlinkinds(H)
 	sinds=ITsiteinds(H)
 	W=MPO()
+	N=length(sinds)
 	W.N=N
 	W1=Array(H[1],(linds[1],sinds[1][1],sinds[1][2]))
 	s1=size(W1)
