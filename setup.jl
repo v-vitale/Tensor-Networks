@@ -10,6 +10,7 @@ Pkg.add("JLD2")
 Pkg.add("FileIO")
 Pkg.add("NPZ")
 Pkg.add("ITensors")
+Pkg.add("StatsBase")
 
 
 println("setup completed")
