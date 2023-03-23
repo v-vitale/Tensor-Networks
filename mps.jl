@@ -510,9 +510,10 @@ function MPS_from_ITensors(ψ::ITMPS)
     ITorthogonalize!(ψ,1)
     linds=ITlinkinds(ψ)
     sinds=ITsiteinds(ψ)
+    L=length(sinds)
     psi=MPS()
     psi.b=1
-    psi.N=length(sinds)
+    psi.N=L
     psi1=Array(ψ[1],(sinds[1],linds[1]))
     s1=size(psi1)
     psi.data[1]=Base.copy(reshape(psi1,(1,s1...)))
