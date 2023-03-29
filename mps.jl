@@ -521,7 +521,7 @@ function MPS_from_ITensors(ψ::ITMPS)
         psi.data[i]=Base.copy(Array(ψ[i],(linds[i-1],sinds[i],linds[i])))
     end
     psi2=Array(ψ[L],(linds[L-1],sinds[L]))
-    s2=size(psi1)
+    s2=size(psi2)
     psi.data[L]=reshape(Base.copy(psi2),(s2...,1))
     return psi
 end
