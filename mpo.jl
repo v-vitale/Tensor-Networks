@@ -1302,6 +1302,7 @@ function Initialize!(s::String,W::MPO,θ::Float64,N::Int)
 
 	H=MPO1+MPO2;
 	W=MPO_from_ITensors(H)
+	return W
     else
         @warn "Wrong parameters"
     end
