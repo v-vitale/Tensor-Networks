@@ -1298,7 +1298,7 @@ function Initialize!(s::String,W::MPO,θ::Float64,N::Int)
 	    end
 	end
 
-	MPO2=ITMPO(ampo2,sites);
+	MPO2=ITMPO(0.5*ampo2,sites);
 
 	H=MPO1+MPO2;
 	W=MPO_from_ITensors(H)
