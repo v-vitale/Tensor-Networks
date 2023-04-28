@@ -34,6 +34,7 @@ MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
+MPO(s::String,θ::Float64,N::Int)=Initialize!(s::String,W::MPO,θ::Float64,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -1272,6 +1273,39 @@ function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float
     end
 end
 
+function Initialize!(s::String,W::MPO,θ::Float64,N::Int)
+    if s=="Schwinger"
+
+	sites = ITsiteinds("S=1/2",N)
+
+	ampo1 = ITOpSum()
+	for i in 1:N-1
+	    ampo1 .+=(-1,"S+",i,"S-",i+1)
+	    ampo1 .+=(-1,"S-",i,"S+",i+1)
+	end
+
+	MPO1=ITMPO(ampo1,sites);
+
+	ampo2=ITOpSum()
+	for n in 1:N-2
+	    for l in n+1:N-1
+		ampo2 .+=(N-l,"Z",n,"Z",l)
+	    end
+	end
+	for n in 1:N-1
+	    for l in 1:n
+		ampo2 .+=(θ/pi+0.5*(-1)^n-0.5,"Z",l)
+	    end
+	end
+
+	MPO2=ITMPO(ampo2,sites);
+
+	H=MPO1+MPO2;
+	W=MPO_from_ITensors(H)
+    else
+        @warn "Wrong parameters"
+    end
+end
         
 function MPO_from_ITensors(H::ITMPO)
 	linds=ITlinkinds(H)
