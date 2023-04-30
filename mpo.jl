@@ -34,7 +34,7 @@ MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
-MPO(s::String,θ::Float64,N::Int)=Initialize!(s::String,W::MPO,θ::Float64,N::Int)
+MPO(s::String,θ::Float64,N::Int)=Initialize!(s::String,MPO(),θ::Float64,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
