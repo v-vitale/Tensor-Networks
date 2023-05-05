@@ -1284,7 +1284,7 @@ function Initialize!(s::String,W::MPO,θ::Float64,m::Float64,N::Int)
 	    ampo1 .+=(-1,"S-",i,"S+",i+1)
 	end
 	for i in 1:N
-	    ampo .+=(m/2*((-1)^i),"Z",i)
+	    ampo1 .+=(m/2*((-1)^i),"Z",i)
 	end
 
 	MPO1=ITMPO(ampo1,sites);
