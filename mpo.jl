@@ -438,6 +438,39 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         W.data[N] = Base.copy(W2)
         W.N=N
         return W
+    else if s=="Hierchical"
+	L=log2(N)
+        sites = ITsiteinds("S=1/2",N)
+
+	subsets=Dict()
+	for p in 0:L-1
+	    println(p)
+	    temp=reshape(Array{Int32}(1:N),(2^p,:))
+	    subsets[p]=[temp[:,i]  for i in 1:Int(N/2^p)]
+	end
+
+	J=1.
+	h=0.
+	ampo = ITOpSum()
+	for p in 0:L-1
+	    subs=[reshape(Array{Int32}(1:L),(2^p,:))[:,i]  for i in 1:Int(N/2^p)]
+	    for j in 1:size(subs)[1]-1
+		for x in subs[j]
+		    for y in subs[j+1]
+		        ampo .+=(J/2^p,"Z",subs[j],"Z",j+1)
+		    end
+		end
+	    end
+	end
+
+	for j in 1:N
+	    ampo .+=(h,"X",j)
+	end
+
+
+	H=ITMPO(ampo,sites)
+	W=MPO_from_ITensors(H)
+	return W
     else
         @warn "Wrong parameters"
     end
