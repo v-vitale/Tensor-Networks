@@ -34,7 +34,6 @@ MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
-MPO(s::String,θ::Float64,N::Int)=Initialize!(s::String,MPO(),θ::Float64,m::Float64,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -438,28 +437,25 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         W.data[N] = Base.copy(W2)
         W.N=N
         return W
-    else if s=="Hierchical"
-	L=log2(N)
+    elseif s=="Hierarchical"
+	L=Int(log2(N))
         sites = ITsiteinds("S=1/2",N)
 
 	subsets=Dict()
 	for p in 0:L-1
-	    println(p)
 	    temp=reshape(Array{Int32}(1:N),(2^p,:))
 	    subsets[p]=[temp[:,i]  for i in 1:Int(N/2^p)]
 	end
 
-	J=1.
-	h=0.
 	ampo = ITOpSum()
 	for p in 0:L-1
-	    subs=[reshape(Array{Int32}(1:L),(2^p,:))[:,i]  for i in 1:Int(N/2^p)]
-	    for j in 1:size(subs)[1]-1
-		for x in subs[j]
-		    for y in subs[j+1]
-		        ampo .+=(J/2^p,"Z",subs[j],"Z",j+1)
+	    subs=[reshape(Array{Int32}(1:N),(2^p,:))[:,i]  for i in 1:Int(N/2^p)]
+	    for j in 1:Int(N/2^p)-1
+		    for x in subs[j]
+			for y in subs[j+1]
+			    ampo .+=(J/2^p,"Z",x,"Z",y)
+			end
 		    end
-		end
 	    end
 	end
 
@@ -469,6 +465,37 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
 
 
 	H=ITMPO(ampo,sites)
+	W=MPO_from_ITensors(H)
+	return W
+    elseif s=="Schwinger"
+	sites = ITsiteinds("S=1/2",N)
+
+	ampo1 = ITOpSum()
+	for i in 1:N-1
+	    ampo1 .+=(-1,"S+",i,"S-",i+1)
+	    ampo1 .+=(-1,"S-",i,"S+",i+1)
+	end
+	for i in 1:N
+	    ampo1 .+=(h/2*((-1)^i),"Z",i)
+	end
+
+	MPO1=ITMPO(ampo1,sites);
+
+	ampo2=ITOpSum()
+	for n in 1:N-2
+	    for l in n+1:N-1
+		ampo2 .+=(N-l,"Z",n,"Z",l)
+	    end
+	end
+	for n in 1:N-1
+	    for l in 1:n
+		ampo2 .+=(J/pi+0.5*(-1)^n-0.5,"Z",l)
+	    end
+	end
+
+	MPO2=ITMPO(0.5*ampo2,sites);
+
+	H=MPO1+MPO2;
 	W=MPO_from_ITensors(H)
 	return W
     else
@@ -1306,43 +1333,6 @@ function Initialize!(s::String,W::MPO,J::Float64,m::Float64,w::Float64,e0::Float
     end
 end
 
-function Initialize!(s::String,W::MPO,θ::Float64,m::Float64,N::Int)
-    if s=="Schwinger"
-
-	sites = ITsiteinds("S=1/2",N)
-
-	ampo1 = ITOpSum()
-	for i in 1:N-1
-	    ampo1 .+=(-1,"S+",i,"S-",i+1)
-	    ampo1 .+=(-1,"S-",i,"S+",i+1)
-	end
-	for i in 1:N
-	    ampo1 .+=(m/2*((-1)^i),"Z",i)
-	end
-
-	MPO1=ITMPO(ampo1,sites);
-
-	ampo2=ITOpSum()
-	for n in 1:N-2
-	    for l in n+1:N-1
-		ampo2 .+=(N-l,"Z",n,"Z",l)
-	    end
-	end
-	for n in 1:N-1
-	    for l in 1:n
-		ampo2 .+=(θ/pi+0.5*(-1)^n-0.5,"Z",l)
-	    end
-	end
-
-	MPO2=ITMPO(0.5*ampo2,sites);
-
-	H=MPO1+MPO2;
-	W=MPO_from_ITensors(H)
-	return W
-    else
-        @warn "Wrong parameters"
-    end
-end
         
 function MPO_from_ITensors(H::ITMPO)
 	linds=ITlinkinds(H)
