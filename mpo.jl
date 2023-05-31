@@ -440,6 +440,9 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
     elseif s=="Hierarchical"
 	L=Int(log2(N))
         sites = ITsiteinds("S=1/2",N)
+	sigma=1
+
+
 
 	subsets=Dict()
 	for p in 0:L-1
@@ -453,7 +456,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
 	    for j in 1:Int(N/2^p)-1
 		    for x in subs[j]
 			for y in subs[j+1]
-			    ampo .+=(J/2^p,"Z",x,"Z",y)
+			    ampo .+=(J/2^((1+sigma)*p),"Z",x,"Z",y)
 			end
 		    end
 	    end
@@ -538,7 +541,7 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
             W.data[i]= Base.copy(Wt)
         end
         for (i,j) in enumerate(subsystem)
-            Wt[1,1,:,:] = op[Int(config[i])+1]
+           Wt[1,1,:,:] = op[Int(config[i])+1]
             W.data[j]= Base.copy(Wt)
         end
         return W
