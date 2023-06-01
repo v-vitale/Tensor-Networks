@@ -78,7 +78,7 @@ function Initialize!(s::String,A::MPS,config::Array)
                 temp[s_][1,:,1]=[0;1]
             end
         end
-        A.N=N
+        A.N=length(config)
         for (s_,spin) in enumerate(config)
             A.data[s_]=temp[s_]
         end
