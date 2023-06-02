@@ -545,7 +545,7 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
             W.data[i]= Base.copy(Wt)
         end
         for (i,j) in enumerate(subsystem)
-           Wt[1,1,:,:] = op[Int(config[i])+1]
+            Wt[1,1,:,:] = op[Int(config[i])+1]
             W.data[j]= Base.copy(Wt)
         end
         return W
