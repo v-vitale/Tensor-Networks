@@ -42,7 +42,10 @@ function RUC_evolution!(psi::MPS,
 end
 
 
-function RUC_measure!(ψ::MPS,p::Float64)
+function RUC_measure!(ψ::MPS,p::Float64; keep_track=false)
+    if keep_track==true
+    	outcomes=Dict()
+    end	
     for site in 1:ψ.N
         if rand() < p
      	    move_orthogonality_center!(ψ,site)
@@ -50,8 +53,14 @@ function RUC_measure!(ψ::MPS,p::Float64)
             rho=temp/tr(temp)
             pup=real(rho[1,1])
             if rand() < pup
+    	        if keep_track==true
+		    outcomes[site]=0
+     	        end	
                 P=MPO("proj",[0],[site],ψ.N)
             else
+	        if keep_track==true
+		    outcomes[site]=1
+     	        end
                 P=MPO("proj",[1],[site],ψ.N)
             end
             ψ=P*ψ
@@ -69,5 +78,5 @@ function RUC_measure!(ψ::MPS,p::Float64)
         end
     end
     move_orthogonality_center!(ψ,1)
-    return ψ
+    return (ψ,outcomes)
 end
