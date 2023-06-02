@@ -34,7 +34,7 @@ MPO(s::String,N::Int)=Initialize!(s::String,MPO(),N::Int)
 MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::Int,N::Int)
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
-MPO(s::String,W::MPO,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),subsystem::Array,N::Int)
+MPO(s::String,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),subsystem::Array,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -509,7 +509,7 @@ end
 
 function Initialize!(s::String,W::MPO,subsystem::Array,N::Int)
     if s=="Sz"
-        op = [[1 0 ; 0 0],[0 0;0 -1]] 
+        op = [1 0 ; 0 -1] 
         id = [1 0; 0 1]
         chi=1
         d=2
