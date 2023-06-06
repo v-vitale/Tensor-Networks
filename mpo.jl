@@ -509,22 +509,50 @@ end
 
 function Initialize!(s::String,W::MPO,subsystem::Array,N::Int)
     if s=="Sz"
-        op = [1 0 ; 0 -1] 
-        id = [1 0; 0 1]
-        chi=1
+        chi=2
         d=2
+
+        σz = [1 0; 0 -1]
+        Id2= [1 0; 0 1]
+        O2 = [0 0; 0 0]
+
+        Wty = im *  zeros(chi,chi,d,d)
+        Wtn = im *  zeros(chi,chi,d,d)
+        Wt1y = im *  zeros(1,chi,d,d)
+        Wt1n = im *  zeros(1,chi,d,d)
+        Wt2y = im *  zeros(chi,1,d,d)
+	Wt2n = im *  zeros(chi,1,d,d)
+
+        Wt1y[1,1,:,:], Wt1n[1,1,:,:] = σz, O2
+        Wt1y[1,2,:,:], Wt1n[1,1,:,:] = Id2, Id2
+        Wty[1,1,:,:], Wtn[1,1,:,:] = Id2, Id2
+        Wty[1,2,:,:], Wtn[1,2,:,:] = O2, O2
+        Wty[2,1,:,:], Wtn[2,1,:,:] = σz, O2
+        Wty[2,2,:,:], Wtn[2,2,:,:]= Id2, Id2 
+        Wt2y[1,1,:,:], Wt2n[1,1,:,:] = Id2, Id2
+        Wt2y[2,1,:,:], Wt2n[2,1,:,:] = σz, O2
+
         W.N=N
-        Wt = im *  zeros(chi,chi,d,d)  
-        Wt[1,1,:,:] = id
+        if 1 in subsystem
+	    W.data[1] = Base.copy(Wt1y)
+	else
+  	    W.data[1] = Base.copy(Wt1n)
+  	end
         
-        for i in 1:N
-            W.data[i]= Base.copy(Wt)
+        for i in 2:(N-1)
+            if i in subsystem
+            	W.data[i] = Base.copy(Wty)
+            else
+                W.data[i] = Base.copy(Wtn)
+            end
         end
-        for (i,j) in enumerate(subsystem)
-            Wt[1,1,:,:] = op
-            W.data[j]= Base.copy(Wt)
-        end
-        return W
+        
+        if N in subsystem
+	    W.data[N] = Base.copy(Wt2y)
+	else
+  	    W.data[N] = Base.copy(Wt2n)
+  	end
+        return W   
     end
 end	
 
@@ -590,6 +618,7 @@ function Initialize!(s::String,W::MPO,N::Int)
         Wt[1,2,:,:]= O2
         Wt[2,1,:,:]= σz 
         Wt[2,2,:,:]= Id2
+        
         Wt2[1,1,:,:] = Id2
         Wt2[2,1,:,:] = σz 
 

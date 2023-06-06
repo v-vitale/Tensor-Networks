@@ -77,6 +77,16 @@ function Initialize!(s::String,A::MPS,config::Array)
             elseif spin=="down" || spin==1
                 temp[s_][1,:,1]=[0;1]
             end
+            if spin=="+"
+                temp[s_][1,:,1]=[1/sqrt(2);1/sqrt(2)]
+            elseif spin=="-"
+                temp[s_][1,:,1]=[1/sqrt(2);-1/sqrt(2)]
+            end
+            if spin=="+i"
+                temp[s_][1,:,1]=[1/sqrt(2);im*1/sqrt(2)]
+            elseif spin=="-i"
+                temp[s_][1,:,1]=[1/sqrt(2);-im*1/sqrt(2)]
+            end
         end
         A.N=length(config)
         for (s_,spin) in enumerate(config)
@@ -220,14 +230,18 @@ function left_orthogonalize!(A::MPS)
     A.b=A.N 
 end
 
+
 function move_orthogonality_center!(A::MPS,b::Int)
     right_orthogonalize!(A)
     
     for i in 1:b-1
         sA = size(A.data[i])
+        try
+            U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.DivideAndConquer())
+	catch e
+	    U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+	end;
         
-        U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
-
         #S /= norm(S)
         V=V'  
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
@@ -244,8 +258,16 @@ function move_orthogonality_center!(A::MPS,b::Int)
 	    for i in A.b:b-1
 		sA = size(A.data[i])
 		
-		U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
-
+		#U,S,V = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+		F=SVD{ComplexF64, Float64, Matrix{ComplexF64}}
+		try
+		    F = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.DivideAndConquer())
+		catch e
+		    F = svd(reshape(A.data[i],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+		end
+       		U=F.U
+       		S=F.S
+       		V=F.V
 		#S /= norm(S)
 		V=V'  
 		A.data[i] = reshape( U,( sA[1], sA[2], :)) 
@@ -259,8 +281,16 @@ function move_orthogonality_center!(A::MPS,b::Int)
 	   for i in A.b:-1:b+1
 		sA = size(A.data[i])
 
-		U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
-
+		#U, S, V = svd(reshape(A.data[i],sA[1], sA[2]*sA[3]), full=false, alg=LinearAlgebra.QRIteration())
+		F=SVD{ComplexF64, Float64, Matrix{ComplexF64}}
+		try
+		    F = svd(reshape(A.data[i],(sA[1], sA[2]*sA[3])),full=false,alg=LinearAlgebra.DivideAndConquer())
+		catch e
+		    F = svd(reshape(A.data[i],(sA[1], sA[2]*sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+		end
+       		U=F.U
+       		S=F.S
+       		V=F.V
 		V=V'
 		A.data[i] = reshape(V,(:, sA[2], sA[3]))
 		if i>1

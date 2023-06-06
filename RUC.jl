@@ -65,7 +65,17 @@ function RUC_measure!(ψ::MPS,p::Float64; keep_track=false)
             end
             ψ=P*ψ
             sA = size(ψ.data[site])
-	    U,S,V = svd(reshape(ψ.data[site],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+	    #U,S,V = svd(reshape(ψ.data[site],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+	    F=SVD{ComplexF64, Float64, Matrix{ComplexF64}}
+	    try
+		F = svd(reshape(ψ.data[site],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.DivideAndConquer())
+	    catch e
+		F = svd(reshape(ψ.data[site],(sA[1]*sA[2],sA[3])),full=false,alg=LinearAlgebra.QRIteration())
+            end
+   	    U=F.U
+	    S=F.S
+	    V=F.V
+	    
 	    V=V'  
 	    S/=norm(S)
 	    ψ.data[site] = reshape( U,( sA[1], sA[2], :)) 
@@ -78,5 +88,9 @@ function RUC_measure!(ψ::MPS,p::Float64; keep_track=false)
         end
     end
     move_orthogonality_center!(ψ,1)
-    return (ψ,outcomes)
+    if keep_track==true
+        return (ψ,outcomes)
+    else
+    	return ψ
+    end
 end
