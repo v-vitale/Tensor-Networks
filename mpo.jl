@@ -341,7 +341,7 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
 
 	H=ITMPO(ampo,sites);    
         W=MPO_from_ITensors(H)
-        return 
+        return W
     elseif s=="Cluster_Ising"
         d=2
         D=5
