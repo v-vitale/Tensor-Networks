@@ -331,12 +331,10 @@ function Initialize!(s::String,W::MPO,J::Float64,h::Float64,N::Int)
         sites = ITsiteinds("S=1/2",N)
 	ampo = ITOpSum()
 	for site in 1:2:N-1
-	    println(site,site+1)
 	    ampo += (-0.5*h,"X",site+1,"X",site)
 	    ampo += (-0.5*h,"Y",site+1,"Y",site)   
 	end
 	for site in 2:2:N-1
-	    println(site,site+1)
 	    ampo += (-0.5*J,"X",site+1,"X",site)
 	    ampo += (-0.5*J,"Y",site+1,"Y",site)
 	end
