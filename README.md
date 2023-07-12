@@ -18,7 +18,7 @@ Packages Needed:
 
 Running "julia setup.jl" installs all the packages needed.
 
-# mps.jl containes the basics for mps
+# mps.jl contains the basics for mps
 - Particular types of MPS:
   - Random
   - GHZ
