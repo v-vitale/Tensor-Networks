@@ -44,6 +44,7 @@ Tutorial:
 - Long Range Ising model
 - Modelization of [Brydges et al., Science (2019)] experiment 
 - J1-J2 model on a square lattice
+- SSH model
 
 Tutorial:
 - W=MPO() initializes an empty W MPO "object".
