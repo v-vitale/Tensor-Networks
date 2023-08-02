@@ -35,6 +35,8 @@ MPO(s::String,d::Int,chi::Int,N::Int)=Initialize!(s::String,MPO(),d::Int,chi::In
 MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)=Initialize!(s::String,MPO(),J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=false)
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
 MPO(s::String,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),subsystem::Array,N::Int)
+MPO(s::String,alpha::Float64,N::Int)=Initialize!(s::String,MPO(),alpha::Float64,N::Int)
+
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -613,8 +615,64 @@ function Initialize!(s::String,W::MPO,config::Array,subsystem::Array,N::Int)
     end
 end
 
-
-
+function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
+    if s=="Rx"
+        chi=1
+        d=2
+        id= [cos(alpha/2) -im*sin(alpha/2); im*sin(alpha/2) cos(alpha/2))]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W
+    elseif s=="Ry"
+        chi=1
+        d=2
+        id= [cos(alpha/2) -sin(alpha/2); sin(alpha/2) cos(alpha/2))]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W
+     elseif s=="Rx"
+        chi=1
+        d=2
+        id= [exp(-im*alpha/2) 0; 0 exp(im*alpha/2))]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W
+    end
+end
+    
 function Initialize!(s::String,W::MPO,N::Int)
     if s=="Sz tot"
         chi=2
@@ -794,6 +852,24 @@ function Initialize!(s::String,W::MPO,N::Int)
         chi=1
         d=2
         id= [1/sqrt(2) -1/sqrt(2); 1/sqrt(2) 1/sqrt(2)]
+        Wt = im *  zeros(chi,chi,d,d)
+        Wt1 = im *  zeros(1,chi,d,d)
+        Wt2 = im *  zeros(chi,1,d,d)
+        Wt[1,1,:,:] = id
+        Wt1[1,1,:,:] = id
+        Wt2[1,1,:,:] = id
+        
+        W.N=N
+        W.data[1] = Base.copy(Wt1)
+        for i in 2:(N-1)
+            W.data[i] = Base.copy(Wt)
+        end
+        W.data[N] = Base.copy(Wt2)
+        return W
+    elseif s=="Rz"
+        chi=1
+        d=2
+        id= [exp(-im*pi/4) 0; 0 exp(im*pi/4)]
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
