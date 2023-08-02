@@ -619,7 +619,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
     if s=="Rx"
         chi=1
         d=2
-        id= [cos(alpha/2) -im*sin(alpha/2); im*sin(alpha/2) cos(alpha/2))]
+        id= [cos(alpha/2) -im*sin(alpha/2); im*sin(alpha/2) cos(alpha/2)]
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
@@ -637,7 +637,7 @@ function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
     elseif s=="Ry"
         chi=1
         d=2
-        id= [cos(alpha/2) -sin(alpha/2); sin(alpha/2) cos(alpha/2))]
+        id= [cos(alpha/2) -sin(alpha/2); sin(alpha/2) cos(alpha/2)]
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
@@ -652,10 +652,10 @@ function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
         end
         W.data[N] = Base.copy(Wt2)
         return W
-     elseif s=="Rx"
+     elseif s=="Rz"
         chi=1
         d=2
-        id= [exp(-im*alpha/2) 0; 0 exp(im*alpha/2))]
+        id= [exp(-im*alpha/2) 0; 0 exp(im*alpha/2)]
         Wt = im *  zeros(chi,chi,d,d)
         Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
