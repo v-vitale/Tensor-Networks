@@ -404,7 +404,7 @@ end
 
 
 function rdm_rho(A::MPS,r::Array)
-    move_orthogonality_center!(A,1)
+    right_orthogonalize!(A)
     sA=size(A.data[r[1]]) 
     rd_rho=reshape(A.data[r[1]],(sA[1],isqrt(sA[2]),isqrt(sA[2]),sA[3]))
     for j in r[2:end]

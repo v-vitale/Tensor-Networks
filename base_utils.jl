@@ -73,7 +73,16 @@ function average(psi::MPS,W::MPO)
     return L[1,1,1]
 end
 
-
+function contract(Q::MPO,W::MPO)
+    sW=size(W.data[1])
+    sQ=size(Q.data[1])
+    L = ones(sQ[1],sW[1])
+    
+    for i in 1:Q.N
+         @tensor L[:] := L[1,2]*Q.data[i][1,-1,4,5]*W.data[i][2,-2,4,5] 
+    end
+    return L[1,1]
+end
 
 function Normalize!(A::MPS)
     norm = MPS_dot(A,A)

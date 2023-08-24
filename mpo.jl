@@ -36,7 +36,7 @@ MPO(s::String,J1::Float64,J2::Float64,cols::Int,rows::Int,config::Array;cutoff=f
 MPO(s::String,J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)=Initialize!(s::String,MPO(),J::Float64,m::Float64,w::Float64,e0::Float64,N::Int)
 MPO(s::String,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),subsystem::Array,N::Int)
 MPO(s::String,alpha::Float64,N::Int)=Initialize!(s::String,MPO(),alpha::Float64,N::Int)
-
+MPO(s::String,alpha::Float64,subsystem::Array,N::Int)=Initialize!(s::String,MPO(),alpha::Float64,subsystem::Array,N::Int)
 
 ++(A::AbstractArray, B::AbstractArray)=cat(A, B,dims=(1,2))
 const ⊕ = ++
@@ -74,7 +74,6 @@ function trace_MPO(A::MPO)
     return result
 end
 
-LinearAlgebra.:tr(A::MPO)= trace_MPO(A)
 
 function adjoint(A::MPO)
     dagA=MPO()
@@ -657,7 +656,6 @@ function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
         d=2
         id= [exp(-im*alpha/2) 0; 0 exp(im*alpha/2)]
         Wt = im *  zeros(chi,chi,d,d)
-        Wt1 = im *  zeros(1,chi,d,d)
         Wt2 = im *  zeros(chi,1,d,d)
         Wt[1,1,:,:] = id
         Wt1[1,1,:,:] = id
@@ -672,6 +670,66 @@ function Initialize!(s::String,W::MPO,alpha::Float64,N::Int)
         return W
     end
 end
+
+function Initialize!(s::String,W::MPO,alpha::Float64,subsystem::Array,N::Int)
+    if s=="Rx"
+        d=2
+        id= [1 0; 0 1]
+        op= [cos(alpha/2) -im*sin(alpha/2); -im*sin(alpha/2) cos(alpha/2)]
+        Wtid = im *  zeros(1,1,d,d)
+        Wtop = im *  zeros(1,1,d,d)
+        Wtid[1,1,:,:] = id
+        Wtop[1,1,:,:] = op
+         
+        W.N=N
+        for i in 1:N
+            if i in subsystem
+            	W.data[i] = Base.copy(Wtop)
+            else
+                W.data[i] = Base.copy(Wtid)
+            end
+        end
+        return W
+    elseif s=="Ry"
+        d=2
+        id= [1 0; 0 1]
+        op= [cos(alpha/2) -sin(alpha/2); sin(alpha/2) cos(alpha/2)]
+        Wtid = im *  zeros(1,1,d,d)
+        Wtop = im *  zeros(1,1,d,d)
+        Wtid[1,1,:,:] = id
+        Wtop[1,1,:,:] = op
+         
+        W.N=N
+        for i in 1:N
+            if i in subsystem
+            	W.data[i] = Base.copy(Wtop)
+            else
+                W.data[i] = Base.copy(Wtid)
+            end
+        end
+        return W
+     elseif s=="Rz"
+        d=2
+        id= [1 0; 0 1]
+        op= [exp(-im*alpha/2) 0; 0 exp(im*alpha/2)]
+        Wtid = im *  zeros(1,1,d,d)
+        Wtop = im *  zeros(1,1,d,d)
+        Wtid[1,1,:,:] = id
+        Wtop[1,1,:,:] = op
+         
+        W.N=N
+        for i in 1:N
+            if i in subsystem
+            	W.data[i] = Base.copy(Wtop)
+            else
+                W.data[i] = Base.copy(Wtid)
+            end
+        end
+        return W
+    end
+end
+
+
     
 function Initialize!(s::String,W::MPO,N::Int)
     if s=="Sz tot"
