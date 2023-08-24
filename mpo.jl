@@ -1014,7 +1014,7 @@ function Initialize!(s::String,W::MPO,d::Int,chi::Int,N::Int)
 end
 
 
-function truncate_MPO!(W::MPO;tol=1e-12)
+function truncate_MPO!(W::MPO;tol=1e-12,chimax=100)
     N=length(W)
     for i in 1:N-1
         temp=permutedims(W.data[i],(1,3,4,2))
