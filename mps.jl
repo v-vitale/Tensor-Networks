@@ -37,7 +37,7 @@ function Initialize!(A::MPS,d::Int,chi::Int,N::Int)
     return A
 end
 
-function truncate!(A::MPS)
+function truncate!(A::MPS; tol=1e-15, chimax=128)
     for i in 1:A.N-1
         sA = size(A.data[i])
 
@@ -45,18 +45,24 @@ function truncate!(A::MPS)
 
         V=V'  
         S=S/norm(S)
-        indices = findall(1 .-cumsum(S.^2) .< 1e-15)
+        indices = findall(1 .-cumsum(S.^2) .< tol)
         if length(indices)>0
             chi = indices[1]+1
         else
             chi = size(S)[1]
         end
     
+    	if chi>chimax
+    	    chi=chimax
+    	end
         if size(S)[1] > chi
             U = U[:,1:chi]
             S = S[1:chi]
             V =  V[1:chi,:]
         end
+        
+        
+        
         println(size(S)[1]," ",chi)
         A.data[i] = reshape( U,( sA[1], sA[2], :)) 
         S=diagm(S)
