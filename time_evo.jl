@@ -33,7 +33,7 @@ function trotter_evolution!(psi::MPS,
                                                             tol)
         end
 
-        for i in psi.N:-1:2
+        for i in psi.N:-1
             psi.data[i-1],psi.data[i] = trotter_swipe_left(psi.data[i-1],
                                                            psi.data[i], 
                                                            gates[i-1], 

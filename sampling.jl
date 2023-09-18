@@ -100,6 +100,34 @@ function sample_configs(ψ,Nr)
         end
         configs[:,rep]=config
     end
-    return configs
+end
+    
+    
+    
+function sample_Pauli(ψ,Nr)
+    σ = [[ 1 0 ; 0 1 ],[ 0 1 ; 1 0],[ 0 -im ; im 0 ],[ 1 0 ; 0 -1 ]]
+    ψ0=copy(ψ)
+    right_normalize!(ψ0)
+    configs=zeros(Int,ψ.N,Nr)
+    probs=zeros(Nr)
+    for rep in 1:Nr
+        ψ=copy(ψ0)
+        Π=1
+	p=zeros(4)
+	L=ones(1,1)
+	for site in 1:ψ.N
+	    for k in 1:4
+		@tensor temp=L[1,2]*conj(ψ.data[site][1,3,5])*σ[k][3,4]*ψ.data[site][2,4,6]*ψ.data[site][9,7,5]*conj(σ[k][7,8])*conj(ψ.data[site][10,8,6])*conj(L[9,10])
+		p[k]=1/2*real(temp)
+	    end
+	    sampled=StatsBase.sample(1:4, ProbabilityWeights(p))
+	    Π*=p[sampled]
+	    configs[site,rep]=sampled
+	    @tensor L[:] := L[1,2]*conj(ψ.data[site][1,3,-1])*σ[sampled][3,4]*ψ.data[site][2,4,-2]
+	    L=(1/sqrt(2*p[sampled]))*L
+	end
+	probs[rep]=Π
+    end
+    return probs,configs
 end
 
